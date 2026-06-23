@@ -5,9 +5,9 @@ dotenv.config();
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/db/schema/index.ts",
+  schema: "./dist/db/schema/index.js",
   out: "./drizzle",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/postgres",
+    url: process.env.DATABASE_URL || "postgres://postgres:securepassword@localhost:5433/citioyen",
   },
 });
