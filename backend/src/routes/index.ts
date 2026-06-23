@@ -1,8 +1,12 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { users } from "../db/schema/index.js";
+import { authRouter } from "./auth.js";
 
 export const router = Router();
+
+// Mount auth routes
+router.use("/auth", authRouter);
 
 router.get("/health", (req, res) => {
   res.json({ status: "OK", expressVersion: 5 });
