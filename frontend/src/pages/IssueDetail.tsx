@@ -1,12 +1,382 @@
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { fetchApi } from "../lib/api";
 
-export function IssueDetail() {
-  const { id } = useParams();
+// ---------- Types ----------
+
+interface MediaRow {
+  id: string;
+  url: string;
+  mediaType: "image" | "video";
+  stage: string;
+}
+
+interface StatusHistoryEntry {
+  id: string;
+  fromStatus: string | null;
+  toStatus: string;
+  note: string | null;
+  createdAt: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  department: string;
+}
+
+interface Issue {
+  id: string;
+  title: string | null;
+  description: string;
+  status: string;
+  lat: number;
+  lng: number;
+  addressText: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reporter: { id: string; name: string; email: string; avatarUrl?: string } | null;
+  category: Category | null;
+  media: MediaRow[];
+  statusHistory: StatusHistoryEntry[];
+}
+
+// ---------- Helpers ----------
+
+const STATUS_COLOR: Record<string, string> = {
+  reported: "#e53e3e",
+  verified: "#dd6b20",
+  assigned: "#dd6b20",
+  in_progress: "#dd6b20",
+  resolved: "#38a169",
+  closed: "#38a169",
+  rejected: "#718096",
+};
+
+function badgeColor(status: string) {
+  return STATUS_COLOR[status] ?? "#3182ce";
+}
+
+function statusLabel(status: string) {
+  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+// ---------- Sub-components ----------
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "3px 12px",
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 700,
+        color: "#fff",
+        backgroundColor: badgeColor(status),
+        textTransform: "uppercase",
+        letterSpacing: "0.07em",
+      }}
+    >
+      {statusLabel(status)}
+    </span>
+  );
+}
+
+function PhotoGallery({ media }: { media: MediaRow[] }) {
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
+  if (media.length === 0) return null;
 
   return (
-    <div>
-      <h1>Issue Detail</h1>
-      <p>Issue ID: {id}</p>
+    <section style={{ marginBottom: 28 }}>
+      <h2 style={headingStyle}>Media</h2>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+          gap: 8,
+        }}
+      >
+        {media.map((m) =>
+          m.mediaType === "image" ? (
+            <img
+              key={m.id}
+              src={m.url}
+              alt="Issue media"
+              onClick={() => setLightbox(m.url)}
+              style={{
+                width: "100%",
+                height: 130,
+                objectFit: "cover",
+                borderRadius: 6,
+                cursor: "zoom-in",
+                border: "1px solid #e2e8f0",
+              }}
+            />
+          ) : (
+            <video
+              key={m.id}
+              src={m.url}
+              controls
+              style={{
+                width: "100%",
+                height: 130,
+                objectFit: "cover",
+                borderRadius: 6,
+                border: "1px solid #e2e8f0",
+              }}
+            />
+          )
+        )}
+      </div>
+
+      {/* Lightbox overlay */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            cursor: "zoom-out",
+          }}
+        >
+          <img
+            src={lightbox}
+            alt="Full size"
+            style={{
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              borderRadius: 8,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            }}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function StatusTimeline({ history }: { history: StatusHistoryEntry[] }) {
+  // API returns newest-first; display chronologically
+  const chronological = [...history].reverse();
+
+  return (
+    <section style={{ marginBottom: 28 }}>
+      <h2 style={headingStyle}>Status Timeline</h2>
+      {chronological.length === 0 ? (
+        <p style={{ color: "#888", fontSize: 14 }}>No status history recorded.</p>
+      ) : (
+        <ol
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            borderLeft: "2px solid #e2e8f0",
+            paddingLeft: 20,
+          }}
+        >
+          {chronological.map((entry, i) => (
+            <li
+              key={entry.id}
+              style={{
+                position: "relative",
+                marginBottom: i < chronological.length - 1 ? 20 : 0,
+              }}
+            >
+              {/* Timeline dot */}
+              <span
+                style={{
+                  position: "absolute",
+                  left: -27,
+                  top: 4,
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  backgroundColor: badgeColor(entry.toStatus),
+                  border: "2px solid #fff",
+                  boxShadow: "0 0 0 2px " + badgeColor(entry.toStatus),
+                }}
+              />
+
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
+                {entry.fromStatus ? (
+                  <>
+                    <StatusBadge status={entry.fromStatus} />
+                    <span style={{ color: "#888", fontSize: 13 }}>→</span>
+                  </>
+                ) : null}
+                <StatusBadge status={entry.toStatus} />
+              </div>
+
+              <div style={{ fontSize: 12, color: "#888", marginBottom: entry.note ? 4 : 0 }}>
+                {fmtDate(entry.createdAt)}
+              </div>
+
+              {entry.note && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#444",
+                    backgroundColor: "#f7fafc",
+                    padding: "6px 10px",
+                    borderRadius: 6,
+                    borderLeft: "3px solid #e2e8f0",
+                  }}
+                >
+                  {entry.note}
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+// ---------- Shared style ----------
+
+const headingStyle: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 700,
+  marginBottom: 12,
+  color: "#1a202c",
+  borderBottom: "1px solid #e2e8f0",
+  paddingBottom: 6,
+};
+
+// ---------- IssueDetail ----------
+
+export function IssueDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    fetchApi(`/issues/${id}`)
+      .then((data) => setIssue(data.issue))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const containerStyle: React.CSSProperties = {
+    maxWidth: 680,
+    margin: "0 auto",
+    padding: "24px 20px 60px",
+    fontFamily: "sans-serif",
+    color: "#2d3748",
+  };
+
+  if (loading) {
+    return (
+      <div style={containerStyle}>
+        <p style={{ color: "#888" }}>Loading issue…</p>
+      </div>
+    );
+  }
+
+  if (error || !issue) {
+    return (
+      <div style={containerStyle}>
+        <div
+          style={{
+            color: "red",
+            backgroundColor: "#ffe6e6",
+            padding: 12,
+            borderRadius: 6,
+            marginBottom: 16,
+          }}
+        >
+          {error || "Issue not found."}
+        </div>
+        <button onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+          ← Back to map
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={containerStyle}>
+      {/* Back link */}
+      <Link
+        to="/"
+        style={{ fontSize: 13, color: "#3182ce", textDecoration: "none", display: "inline-block", marginBottom: 20 }}
+      >
+        ← Back to map
+      </Link>
+
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, flex: 1 }}>
+            {issue.title ?? "Untitled Issue"}
+          </h1>
+          <StatusBadge status={issue.status} />
+        </div>
+
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>
+          Reported {fmtDate(issue.createdAt)}
+          {issue.reporter && (
+            <> by <strong style={{ color: "#555" }}>{issue.reporter.name}</strong></>
+          )}
+          {issue.category && (
+            <> · <span style={{ color: "#3182ce" }}>{issue.category.department}</span></>
+          )}
+        </div>
+
+        {issue.addressText && (
+          <div style={{ fontSize: 13, color: "#666" }}>📍 {issue.addressText}</div>
+        )}
+      </div>
+
+      {/* Description */}
+      <section style={{ marginBottom: 28 }}>
+        <h2 style={headingStyle}>Description</h2>
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>
+          {issue.description}
+        </p>
+      </section>
+
+      {/* Media gallery */}
+      <PhotoGallery media={issue.media} />
+
+      {/* Status timeline */}
+      <StatusTimeline history={issue.statusHistory} />
+
+      {/* Location */}
+      <section>
+        <h2 style={headingStyle}>Location</h2>
+        <p style={{ fontSize: 13, color: "#555", margin: 0 }}>
+          Lat: <strong>{issue.lat.toFixed(6)}</strong> · Lng: <strong>{issue.lng.toFixed(6)}</strong>
+        </p>
+        <a
+          href={`https://maps.google.com/?q=${issue.lat},${issue.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 13, color: "#3182ce", display: "inline-block", marginTop: 6 }}
+        >
+          Open in Google Maps ↗
+        </a>
+      </section>
     </div>
   );
 }
