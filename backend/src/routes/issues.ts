@@ -275,3 +275,91 @@ issuesRouter.post("/:id/validate", requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// --- PATCH /:id/status — Update issue status ---
+
+const updateStatusSchema = z.object({
+  newStatus: z.enum([
+    "reported",
+    "verified",
+    "assigned",
+    "in_progress",
+    "resolved",
+    "closed",
+    "rejected",
+  ]),
+  note: z.string().optional(),
+});
+
+issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const parsed = updateStatusSchema.safeParse(req.body);
+  
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+    return;
+  }
+
+  const { newStatus, note } = parsed.data;
+  const issueId = req.params.id as string;
+  const userId = authReq.userId!;
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { role: true },
+    });
+
+    if (!user || !["admin", "super_admin", "field_agent"].includes(user.role)) {
+      res.status(403).json({ error: "Insufficient permissions to change issue status" });
+      return;
+    }
+
+    const issue = await db.query.issues.findFirst({
+      where: eq(issues.id, issueId),
+      columns: { status: true },
+    });
+
+    if (!issue) {
+      res.status(404).json({ error: "Issue not found" });
+      return;
+    }
+
+    const oldStatus = issue.status;
+    
+    // Validate transition
+    const validTransitions: Record<string, string[]> = {
+      reported: ["verified", "rejected"],
+      verified: ["assigned", "rejected"],
+      assigned: ["in_progress", "rejected"],
+      in_progress: ["resolved", "rejected"],
+      resolved: ["closed"],
+      closed: [],
+      rejected: [],
+    };
+
+    if (!validTransitions[oldStatus]?.includes(newStatus)) {
+      res.status(400).json({ error: `Invalid transition from ${oldStatus} to ${newStatus}` });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(issues)
+        .set({ status: newStatus as any, updatedAt: new Date() })
+        .where(eq(issues.id, issueId));
+
+      await tx.insert(issueStatusHistory).values({
+        issueId,
+        fromStatus: oldStatus,
+        toStatus: newStatus as any,
+        changedBy: userId,
+        note: note || null,
+      });
+    });
+
+    res.json({ success: true, newStatus });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
