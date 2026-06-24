@@ -44,12 +44,12 @@ interface Issue {
 // ---------- Helpers ----------
 
 const STATUS_COLOR: Record<string, string> = {
-  reported: "#e53e3e",
-  verified: "#dd6b20",
-  assigned: "#dd6b20",
-  in_progress: "#dd6b20",
-  resolved: "#38a169",
-  closed: "#38a169",
+  reported: "#E53E3E",
+  verified: "#DD6B20",
+  assigned: "#DD6B20",
+  in_progress: "#DD6B20",
+  resolved: "#2E7D32",
+  closed: "#2E7D32",
   rejected: "#718096",
 };
 
@@ -230,10 +230,10 @@ function StatusTimeline({ history }: { history: StatusHistoryEntry[] }) {
                   style={{
                     fontSize: 13,
                     color: "#444",
-                    backgroundColor: "#f7fafc",
+                    backgroundColor: "#F0F4F8",
                     padding: "6px 10px",
                     borderRadius: 6,
-                    borderLeft: "3px solid #e2e8f0",
+                    borderLeft: "3px solid #D0D7E3",
                   }}
                 >
                   {entry.note}
@@ -253,8 +253,8 @@ const headingStyle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 700,
   marginBottom: 12,
-  color: "#1a202c",
-  borderBottom: "1px solid #e2e8f0",
+  color: "#1A202C",
+  borderBottom: "1px solid #D0D7E3",
   paddingBottom: 6,
 };
 
@@ -280,15 +280,17 @@ export function IssueDetail() {
   const containerStyle: React.CSSProperties = {
     maxWidth: 680,
     margin: "0 auto",
-    padding: "24px 20px 60px",
-    fontFamily: "sans-serif",
-    color: "#2d3748",
+    padding: "28px 24px 64px",
+    fontFamily: "var(--sans, sans-serif)",
+    color: "#2D3748",
+    background: "#F5F7FA",
+    minHeight: "100svh",
   };
 
   if (loading) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "#888" }}>Loading issue…</p>
+        <p style={{ color: "#5A6478" }}>Loading issue…</p>
       </div>
     );
   }
@@ -298,16 +300,18 @@ export function IssueDetail() {
       <div style={containerStyle}>
         <div
           style={{
-            color: "red",
-            backgroundColor: "#ffe6e6",
+            color: "#C62828",
+            background: "#FFEBEE",
+            border: "1px solid #FFCDD2",
             padding: 12,
             borderRadius: 6,
             marginBottom: 16,
+            fontSize: 14,
           }}
         >
           {error || "Issue not found."}
         </div>
-        <button onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+        <button onClick={() => navigate("/")} style={{ cursor: "pointer", color: "#1565C0", background: "none", border: "1px solid #1565C0", borderRadius: 5, padding: "7px 14px", fontWeight: 600 }}>
           ← Back to map
         </button>
       </div>
@@ -319,7 +323,7 @@ export function IssueDetail() {
       {/* Back link */}
       <Link
         to="/"
-        style={{ fontSize: 13, color: "#3182ce", textDecoration: "none", display: "inline-block", marginBottom: 20 }}
+        style={{ fontSize: 13, color: "#1565C0", textDecoration: "none", display: "inline-block", marginBottom: 20, fontWeight: 600 }}
       >
         ← Back to map
       </Link>
@@ -339,7 +343,7 @@ export function IssueDetail() {
             <> by <strong style={{ color: "#555" }}>{issue.reporter.name}</strong></>
           )}
           {issue.category && (
-            <> · <span style={{ color: "#3182ce" }}>{issue.category.department}</span></>
+            <> · <span style={{ color: "#1565C0" }}>{issue.category.department}</span></>
           )}
         </div>
 
@@ -372,7 +376,7 @@ export function IssueDetail() {
           href={`https://maps.google.com/?q=${issue.lat},${issue.lng}`}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ fontSize: 13, color: "#3182ce", display: "inline-block", marginTop: 6 }}
+          style={{ fontSize: 13, color: "#1565C0", display: "inline-block", marginTop: 6, fontWeight: 600 }}
         >
           Open in Google Maps ↗
         </a>

@@ -33,12 +33,12 @@ interface Issue {
 // ---------- Status helpers ----------
 
 const STATUS_COLOR: Record<string, string> = {
-  reported: "#e53e3e",
-  verified: "#dd6b20",
-  assigned: "#dd6b20",
-  in_progress: "#dd6b20",
-  resolved: "#38a169",
-  closed: "#38a169",
+  reported: "#E53E3E",
+  verified: "#DD6B20",
+  assigned: "#DD6B20",
+  in_progress: "#DD6B20",
+  resolved: "#2E7D32",
+  closed: "#2E7D32",
   rejected: "#718096",
 };
 
@@ -225,31 +225,33 @@ export function MapView() {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          background: "rgba(255,255,255,0.95)",
-          padding: "8px 14px",
-          borderRadius: 8,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-          fontFamily: "sans-serif",
+          background: "#fff",
+          padding: "8px 16px",
+          borderRadius: 10,
+          boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
+          fontFamily: "var(--sans, sans-serif)",
           fontSize: 13,
+          color: "var(--text, #2D3748)",
           zIndex: 10,
+          borderLeft: "4px solid #1565C0",
         }}
       >
-        <span>
-          👋 <strong>{user?.name}</strong>
-        </span>
-        <span style={{ color: "#ccc" }}>|</span>
-        {loading && <span style={{ color: "#888" }}>Loading issues…</span>}
+        <span style={{ fontWeight: 700, color: "#1565C0", fontSize: 15, letterSpacing: "-0.3px" }}>Citioyen</span>
+        <span style={{ color: "#D0D7E3" }}>|</span>
+        <span>👋 <strong>{user?.name}</strong></span>
+        <span style={{ color: "#D0D7E3" }}>|</span>
+        {loading && <span style={{ color: "#5A6478" }}>Loading issues…</span>}
         {!loading && !error && (
-          <span style={{ color: "#555" }}>{issues.length} issue{issues.length !== 1 ? "s" : ""}</span>
+          <span style={{ color: "#5A6478" }}>{issues.length} issue{issues.length !== 1 ? "s" : ""}</span>
         )}
-        {error && <span style={{ color: "red" }}>Error: {error}</span>}
-        <span style={{ color: "#ccc" }}>|</span>
+        {error && <span style={{ color: "#C62828" }}>Error: {error}</span>}
+        <span style={{ color: "#D0D7E3" }}>|</span>
         <button
           onClick={logout}
           style={{
             border: "none",
             background: "none",
-            color: "#e53e3e",
+            color: "#C62828",
             cursor: "pointer",
             fontWeight: 600,
             padding: 0,
@@ -268,18 +270,19 @@ export function MapView() {
           bottom: 32,
           left: "50%",
           transform: "translateX(-50%)",
-          padding: "12px 28px",
-          backgroundColor: "#3182ce",
+          padding: "13px 30px",
+          backgroundColor: "#1565C0",
           color: "#fff",
           border: "none",
           borderRadius: 999,
           fontSize: 15,
           fontWeight: 700,
           cursor: "pointer",
-          boxShadow: "0 4px 14px rgba(49,130,206,0.5)",
+          boxShadow: "0 4px 16px rgba(21,101,192,0.45)",
           zIndex: 10,
-          fontFamily: "sans-serif",
+          fontFamily: "var(--sans, sans-serif)",
           whiteSpace: "nowrap",
+          letterSpacing: "0.01em",
         }}
       >
         + Report an Issue

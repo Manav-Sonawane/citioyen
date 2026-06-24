@@ -270,44 +270,49 @@ function ReportIssueInner() {
     }
   };
 
+
   // ---------- Styles ----------
 
   const s: Record<string, React.CSSProperties> = {
     container: {
       maxWidth: "600px",
       margin: "40px auto",
-      padding: "24px",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-      fontFamily: "sans-serif",
+      padding: "28px 28px 36px",
+      background: "#FFFFFF",
+      border: "1px solid #D0D7E3",
+      borderRadius: "10px",
+      fontFamily: "var(--sans, sans-serif)",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
     },
     group: { marginBottom: "18px" },
-    label: { display: "block", marginBottom: "5px", fontWeight: "bold", fontSize: "14px" },
-    input: { width: "100%", padding: "9px 10px", boxSizing: "border-box", fontSize: "14px", border: "1px solid #ccc", borderRadius: "4px" },
-    textarea: { width: "100%", padding: "9px 10px", boxSizing: "border-box", fontSize: "14px", resize: "vertical", minHeight: "100px", border: "1px solid #ccc", borderRadius: "4px" },
-    hint: { fontSize: "12px", color: "#666", marginTop: "5px" },
-    charCount: { fontSize: "12px", color: description.length > 2000 ? "red" : "#666", textAlign: "right", marginTop: "3px" },
-    error: { color: "red", backgroundColor: "#ffe6e6", padding: "10px", marginBottom: "16px", borderRadius: "4px", fontSize: "14px" },
+    label: { display: "block", marginBottom: "5px", fontWeight: 600, fontSize: "13px", color: "#5A6478", textTransform: "uppercase" as const, letterSpacing: "0.04em" },
+    input: { width: "100%", padding: "9px 11px", boxSizing: "border-box" as const, fontSize: "14px", border: "1px solid #D0D7E3", borderRadius: "5px", color: "#2D3748", background: "#fff" },
+    textarea: { width: "100%", padding: "9px 11px", boxSizing: "border-box" as const, fontSize: "14px", resize: "vertical" as const, minHeight: "110px", border: "1px solid #D0D7E3", borderRadius: "5px", color: "#2D3748", background: "#fff" },
+    hint: { fontSize: "12px", color: "#5A6478", marginTop: "5px" },
+    charCount: { fontSize: "12px", color: description.length > 2000 ? "#C62828" : "#5A6478", textAlign: "right" as const, marginTop: "3px" },
+    error: { color: "#C62828", backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2", padding: "10px 14px", marginBottom: "16px", borderRadius: "6px", fontSize: "14px" },
     submitBtn: {
       width: "100%", padding: "11px", fontSize: "15px", fontWeight: 700,
-      backgroundColor: submitting ? "#aaa" : "#007BFF",
-      color: "white", border: "none", borderRadius: "5px",
+      backgroundColor: submitting ? "#9EB5D8" : "#1565C0",
+      color: "white", border: "none", borderRadius: "6px",
       cursor: submitting ? "not-allowed" : "pointer",
+      letterSpacing: "0.01em",
     },
     geoBtn: {
-      padding: "7px 14px", fontSize: "13px", border: "1px solid #ccc",
-      borderRadius: "4px", cursor: geoLoading ? "not-allowed" : "pointer",
-      backgroundColor: "#f7f7f7", color: "#333",
+      padding: "7px 14px", fontSize: "13px", border: "1px solid #D0D7E3",
+      borderRadius: "5px", cursor: geoLoading ? "not-allowed" : "pointer",
+      backgroundColor: "#F5F7FA", color: "#1565C0", fontWeight: 600,
     },
     toggleBtn: {
       background: "none", border: "none", cursor: "pointer",
-      color: "#3182ce", fontSize: "13px", padding: 0, textDecoration: "underline",
+      color: "#1565C0", fontSize: "13px", padding: 0, textDecoration: "underline",
     },
     coordsDisplay: {
-      fontSize: "12px", color: "#555", marginTop: "6px",
-      padding: "5px 8px", backgroundColor: "#f0f4f8", borderRadius: "4px",
+      fontSize: "12px", color: "#2E7D32", marginTop: "8px",
+      padding: "6px 10px", backgroundColor: "#E8F5E9", borderRadius: "5px",
+      border: "1px solid #C8E6C9",
     },
-    back: { display: "block", textAlign: "center", marginTop: "14px", fontSize: "13px" },
+    back: { display: "block", textAlign: "center" as const, marginTop: "16px", fontSize: "13px", color: "#1565C0" },
   };
 
   const mapCenter = coords ?? MUMBAI;
