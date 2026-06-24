@@ -39,6 +39,7 @@ interface Issue {
   category: Category | null;
   media: MediaRow[];
   statusHistory: StatusHistoryEntry[];
+  upvoteCount: number;
 }
 
 // ---------- Helpers ----------
@@ -267,6 +268,23 @@ export function IssueDetail() {
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [voteLoading, setVoteLoading] = useState(false);
+
+  const handleVote = async (voteType: "confirm" | "dispute") => {
+    if (!issue) return;
+    setVoteLoading(true);
+    try {
+      const data = await fetchApi(`/issues/${issue.id}/validate`, {
+        method: "POST",
+        body: JSON.stringify({ voteType }),
+      });
+      setIssue((prev) => (prev ? { ...prev, upvoteCount: data.upvoteCount } : null));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setVoteLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -358,6 +376,48 @@ export function IssueDetail() {
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>
           {issue.description}
         </p>
+      </section>
+
+      {/* Validation */}
+      <section style={{ marginBottom: 28 }}>
+        <h2 style={headingStyle}>Validation</h2>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button
+            onClick={() => handleVote("confirm")}
+            disabled={voteLoading}
+            style={{
+              padding: "8px 16px",
+              background: "#E8F5E9",
+              color: "#2E7D32",
+              border: "1px solid #C8E6C9",
+              borderRadius: 6,
+              fontWeight: 600,
+              cursor: voteLoading ? "not-allowed" : "pointer",
+              opacity: voteLoading ? 0.7 : 1,
+            }}
+          >
+            👍 Confirm
+          </button>
+          <button
+            onClick={() => handleVote("dispute")}
+            disabled={voteLoading}
+            style={{
+              padding: "8px 16px",
+              background: "#FFEBEE",
+              color: "#C62828",
+              border: "1px solid #FFCDD2",
+              borderRadius: 6,
+              fontWeight: 600,
+              cursor: voteLoading ? "not-allowed" : "pointer",
+              opacity: voteLoading ? 0.7 : 1,
+            }}
+          >
+            👎 Dispute
+          </button>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#5A6478", marginLeft: 8 }}>
+            Community Score: {issue.upvoteCount}
+          </span>
+        </div>
       </section>
 
       {/* Media gallery */}

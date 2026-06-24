@@ -1,13 +1,14 @@
 import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { db } from "../db/db.js";
 import {
   issues,
   issueMedia,
   issueStatusHistory,
   users,
+  issueValidations,
 } from "../db/schema/index.js";
 import { requireAuth } from "../middleware/index.js";
 import { uploadBuffer } from "../services/storage.js";
@@ -200,4 +201,77 @@ issuesRouter.get("/:id", async (req, res) => {
   }
 
   res.json({ issue });
+});
+
+// --- POST /:id/validate — Confirm or dispute an issue ---
+
+const validateIssueSchema = z.object({
+  voteType: z.enum(["confirm", "dispute"]),
+});
+
+issuesRouter.post("/:id/validate", requireAuth, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const parsed = validateIssueSchema.safeParse(req.body);
+  
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+    return;
+  }
+
+  const { voteType } = parsed.data;
+  const issueId = req.params.id as string;
+  const userId = authReq.userId!;
+
+  try {
+    const newUpvoteCount = await db.transaction(async (tx) => {
+      // 1. Check existing vote
+      const [existing] = await tx
+        .select()
+        .from(issueValidations)
+        .where(
+          and(
+            eq(issueValidations.issueId, issueId),
+            eq(issueValidations.userId, userId)
+          )
+        );
+
+      let delta = 0;
+      if (!existing) {
+        if (voteType === "confirm") delta = 1;
+      } else {
+        if (existing.voteType === "confirm" && voteType === "dispute") delta = -1;
+        else if (existing.voteType === "dispute" && voteType === "confirm") delta = 1;
+      }
+
+      // 2. Upsert vote
+      await tx
+        .insert(issueValidations)
+        .values({ issueId, userId, voteType })
+        .onConflictDoUpdate({
+          target: [issueValidations.issueId, issueValidations.userId],
+          set: { voteType },
+        });
+
+      // 3. Apply delta if needed
+      if (delta !== 0) {
+        const [updated] = await tx
+          .update(issues)
+          .set({ upvoteCount: sql`${issues.upvoteCount} + ${delta}` })
+          .where(eq(issues.id, issueId))
+          .returning({ upvoteCount: issues.upvoteCount });
+        return updated.upvoteCount;
+      }
+
+      // 4. If no delta, return current count
+      const [issue] = await tx
+        .select({ upvoteCount: issues.upvoteCount })
+        .from(issues)
+        .where(eq(issues.id, issueId));
+      return issue.upvoteCount;
+    });
+
+    res.json({ upvoteCount: newUpvoteCount });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
