@@ -289,6 +289,7 @@ const updateStatusSchema = z.object({
     "rejected",
   ]),
   note: z.string().optional(),
+  assignedTo: z.string().uuid().optional(),
 });
 
 issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
@@ -300,7 +301,7 @@ issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
     return;
   }
 
-  const { newStatus, note } = parsed.data;
+  const { newStatus, note, assignedTo } = parsed.data;
   const issueId = req.params.id as string;
   const userId = authReq.userId!;
 
@@ -338,24 +339,31 @@ issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
       rejected: [],
     };
 
-    if (!validTransitions[oldStatus]?.includes(newStatus)) {
+    if (oldStatus !== newStatus && !validTransitions[oldStatus]?.includes(newStatus)) {
       res.status(400).json({ error: `Invalid transition from ${oldStatus} to ${newStatus}` });
       return;
     }
 
     await db.transaction(async (tx) => {
+      const updateData: any = { status: newStatus as any, updatedAt: new Date() };
+      if (assignedTo !== undefined) {
+        updateData.assignedTo = assignedTo;
+      }
+      
       await tx
         .update(issues)
-        .set({ status: newStatus as any, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(issues.id, issueId));
 
-      await tx.insert(issueStatusHistory).values({
-        issueId,
-        fromStatus: oldStatus,
-        toStatus: newStatus as any,
-        changedBy: userId,
-        note: note || null,
-      });
+      if (oldStatus !== newStatus || note) {
+        await tx.insert(issueStatusHistory).values({
+          issueId,
+          fromStatus: oldStatus,
+          toStatus: newStatus as any,
+          changedBy: userId,
+          note: note || null,
+        });
+      }
     });
 
     res.json({ success: true, newStatus });

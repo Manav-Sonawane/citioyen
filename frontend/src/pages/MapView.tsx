@@ -243,6 +243,9 @@ export function MapView() {
         <div style={{ display: "flex", gap: 16 }}>
           <Link to="/" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Feed</Link>
           <span style={{ fontWeight: 700, color: "var(--primary)", borderBottom: "2px solid var(--primary)" }}>Map</span>
+          {user && ["admin", "super_admin"].includes(user.role) && (
+            <Link to="/admin" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Admin</Link>
+          )}
         </div>
 
         <span style={{ color: "var(--border)" }}>|</span>

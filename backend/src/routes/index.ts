@@ -1,8 +1,10 @@
 import { Router } from "express";
+import { eq } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { users } from "../db/schema/index.js";
 import { authRouter } from "./auth.js";
 import { issuesRouter } from "./issues.js";
+import { requireAuth } from "../middleware/index.js";
 
 export const router = Router();
 
@@ -16,10 +18,9 @@ router.get("/health", (req, res) => {
   res.json({ status: "OK", expressVersion: 5 });
 });
 
-// Express 5 async handler: no manual try/catch or helper wrapper needed.
-// Rejections automatically propagate to next(err).
-router.get("/users", async (req, res) => {
-  const allUsers = await db.select().from(users);
+router.get("/users", requireAuth, async (req, res) => {
+  const role = req.query.role as string | undefined;
+  const allUsers = await db.select().from(users).where(role ? eq(users.role, role as any) : undefined);
   res.json({ users: allUsers });
 });
 

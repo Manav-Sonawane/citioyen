@@ -6,6 +6,7 @@ import { MapView } from "./pages/MapView";
 import { HomeFeed } from "./pages/HomeFeed";
 import { IssueDetail } from "./pages/IssueDetail";
 import { ReportIssue } from "./pages/ReportIssue";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import "./App.css";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
         <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
         <Route path="/issues/:id" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       </Routes>
     </div>
   );
