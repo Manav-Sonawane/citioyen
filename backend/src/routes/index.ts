@@ -2,11 +2,15 @@ import { Router } from "express";
 import { db } from "../db/db.js";
 import { users } from "../db/schema/index.js";
 import { authRouter } from "./auth.js";
+import { issuesRouter } from "./issues.js";
 
 export const router = Router();
 
 // Mount auth routes
 router.use("/auth", authRouter);
+
+// Mount issues routes
+router.use("/issues", issuesRouter);
 
 router.get("/health", (req, res) => {
   res.json({ status: "OK", expressVersion: 5 });
