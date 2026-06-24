@@ -236,8 +236,16 @@ export function MapView() {
           borderLeft: "4px solid #1565C0",
         }}
       >
-        <span style={{ fontWeight: 700, color: "#1565C0", fontSize: 15, letterSpacing: "-0.3px" }}>Citioyen</span>
-        <span style={{ color: "#D0D7E3" }}>|</span>
+        <span style={{ fontWeight: 800, color: "var(--primary)", fontSize: 18, letterSpacing: "-0.5px" }}>Citioyen</span>
+        <span style={{ color: "var(--border)" }}>|</span>
+        
+        {/* Toggle Nav */}
+        <div style={{ display: "flex", gap: 16 }}>
+          <Link to="/" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Feed</Link>
+          <span style={{ fontWeight: 700, color: "var(--primary)", borderBottom: "2px solid var(--primary)" }}>Map</span>
+        </div>
+
+        <span style={{ color: "var(--border)" }}>|</span>
         <span>👋 <strong>{user?.name}</strong></span>
         <span style={{ color: "#D0D7E3" }}>|</span>
         {loading && <span style={{ color: "#5A6478" }}>Loading issues…</span>}
