@@ -318,7 +318,12 @@ issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
 
     const issue = await db.query.issues.findFirst({
       where: eq(issues.id, issueId),
-      columns: { status: true },
+      columns: { status: true, categoryId: true },
+      with: {
+        category: {
+          columns: { defaultSlaHours: true },
+        },
+      },
     });
 
     if (!issue) {
@@ -346,6 +351,14 @@ issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
 
     await db.transaction(async (tx) => {
       const updateData: any = { status: newStatus as any, updatedAt: new Date() };
+      
+      // Set SLA Deadline if transitioning to verified and we have a category
+      if (oldStatus !== newStatus && newStatus === "verified" && issue.category) {
+        const deadline = new Date();
+        deadline.setHours(deadline.getHours() + issue.category.defaultSlaHours);
+        updateData.slaDeadline = deadline;
+      }
+
       if (assignedTo !== undefined) {
         updateData.assignedTo = assignedTo;
       }
