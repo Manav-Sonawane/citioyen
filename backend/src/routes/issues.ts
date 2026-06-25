@@ -636,7 +636,7 @@ issuesRouter.post("/:id/override", requireAuth, async (req, res) => {
   try {
     const user = await db.query.users.findFirst({
       where: eq(users.id, authReq.userId!),
-      columns: { role: true },
+      columns: { role: true, name: true },
     });
 
     if (!user || !["admin", "super_admin"].includes(user.role)) {
@@ -659,12 +659,25 @@ issuesRouter.post("/:id/override", requireAuth, async (req, res) => {
       .where(eq(issues.id, issueId))
       .returning();
 
+    const recentHistory = await db.query.issueStatusHistory.findFirst({
+      where: eq(issueStatusHistory.issueId, issueId),
+      orderBy: [desc(issueStatusHistory.createdAt)],
+    });
+
+    let overrideNote = `ADMIN_OVERRIDE: Admin ${user.name} manually confirmed resolution.`;
+    if (recentHistory?.note?.startsWith("AI could not confirm resolution")) {
+      const match = recentHistory.note.match(/AI could not confirm resolution \(Confidence: (.*?)\): (.*)/);
+      if (match) {
+        overrideNote = `ADMIN_OVERRIDE: AI flagged as not resolved (confidence: ${match[1]}, reasoning: '${match[2]}'). Admin ${user.name} manually confirmed resolution.`;
+      }
+    }
+
     await db.insert(issueStatusHistory).values({
       issueId,
       fromStatus: currentIssue.status as any,
       toStatus: "resolved",
       changedBy: authReq.userId!,
-      note: "Manually resolved by admin override"
+      note: overrideNote
     });
 
     res.json({ success: true, issue: updatedIssue });
