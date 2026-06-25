@@ -246,6 +246,9 @@ export function MapView() {
           {user && ["admin", "super_admin"].includes(user.role) && (
             <Link to="/admin" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Admin</Link>
           )}
+          {user && user.role === "field_agent" && (
+            <Link to="/field-agent" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>My Tasks</Link>
+          )}
         </div>
 
         <span style={{ color: "var(--border)" }}>|</span>

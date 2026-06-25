@@ -14,9 +14,10 @@ import {
 } from "../db/schema/index.js";
 import { requireAuth } from "../middleware/index.js";
 import { uploadBuffer } from "../services/storage.js";
-import { categorizeIssue, embedText } from "../services/gemini.js";
+import { categorizeIssue, embedText, verifyResolution } from "../services/gemini.js";
 import { checkAndEscalateSlaBreaches } from "../services/escalation.js";
 import type { AuthenticatedRequest } from "../types/index.js";
+import { jwtVerify } from "../lib/index.js";
 
 export const issuesRouter = Router();
 
@@ -229,11 +230,34 @@ issuesRouter.get("/", async (req, res) => {
   checkAndEscalateSlaBreaches().catch(console.error);
 
   const statusFilter = req.query.status as string | undefined;
+  const assignedToFilter = req.query.assignedTo as string | undefined;
+
+  let assignedToWhere: any = undefined;
+  if (assignedToFilter === "me") {
+    const token = req.cookies?.token || req.headers.authorization?.replace("Bearer ", "");
+    if (!token) {
+      res.status(401).json({ error: "Authentication required for ?assignedTo=me" });
+      return;
+    }
+    try {
+      const payload = jwtVerify(token);
+      assignedToWhere = eq(issues.assignedTo, payload.userId);
+    } catch {
+      res.status(401).json({ error: "Invalid token" });
+      return;
+    }
+  } else if (assignedToFilter) {
+    assignedToWhere = eq(issues.assignedTo, assignedToFilter);
+  }
+
+  const filters = [];
+  if (statusFilter) filters.push(eq(issues.status, statusFilter as any));
+  if (assignedToWhere) filters.push(assignedToWhere);
 
   const result = await db.query.issues.findMany({
     orderBy: [desc(issues.createdAt)],
     limit: 200,
-    ...(statusFilter ? { where: eq(issues.status, statusFilter as any) } : {}),
+    ...(filters.length > 0 ? { where: and(...filters) } : {}),
     with: {
       media: true,
       reporter: {
@@ -506,6 +530,83 @@ issuesRouter.patch("/:id/status", requireAuth, async (req, res) => {
 
     res.json({ success: true, newStatus });
   } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- POST /:id/resolve — AI-verified resolution ---
+
+issuesRouter.post("/:id/resolve", requireAuth, upload.single("afterPhoto"), async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const issueId = req.params.id as string;
+  const file = req.file;
+
+  if (!file) {
+    res.status(400).json({ error: "Missing 'afterPhoto' file" });
+    return;
+  }
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, authReq.userId!),
+      columns: { role: true },
+    });
+
+    if (!user || !["admin", "super_admin", "field_agent"].includes(user.role)) {
+      res.status(403).json({ error: "Insufficient permissions to resolve issue" });
+      return;
+    }
+
+    const currentIssue = await db.query.issues.findFirst({
+      where: eq(issues.id, issueId),
+      columns: { status: true },
+    });
+
+    if (!currentIssue) {
+      res.status(404).json({ error: "Issue not found" });
+      return;
+    }
+
+    const beforeMedia = await db.query.issueMedia.findFirst({
+      where: and(eq(issueMedia.issueId, issueId), eq(issueMedia.stage, "report")),
+    });
+
+    let verificationResult = { looksResolved: false, confidence: 0, reasoning: "No before photo found to compare against" };
+
+    if (beforeMedia && beforeMedia.url) {
+      const beforeRes = await fetch(beforeMedia.url);
+      if (beforeRes.ok) {
+        const beforeBuffer = Buffer.from(await beforeRes.arrayBuffer());
+        const beforeMime = beforeRes.headers.get("content-type") || "image/jpeg";
+        verificationResult = await verifyResolution(beforeBuffer, beforeMime, file.buffer, file.mimetype);
+      }
+    }
+
+    const afterUrl = await uploadBuffer(file.buffer, file.originalname, file.mimetype, "resolutions");
+    
+    await db.insert(issueMedia).values({
+      issueId,
+      url: afterUrl,
+      mediaType: mediaTypeFromMime(file.mimetype),
+      stage: "resolution"
+    });
+
+    const [updatedIssue] = await db.update(issues)
+      .set({ status: "resolved", updatedAt: new Date() })
+      .where(eq(issues.id, issueId))
+      .returning();
+
+    await db.insert(issueStatusHistory).values({
+      issueId,
+      fromStatus: currentIssue.status as any,
+      toStatus: "resolved",
+      changedBy: authReq.userId!,
+      note: `Resolution verified by AI: ${verificationResult.reasoning}`
+    });
+
+    res.json({ issue: updatedIssue, verification: verificationResult });
+  } catch (err: any) {
+    console.error("Resolve error:", err);
     res.status(500).json({ error: err.message });
   }
 });

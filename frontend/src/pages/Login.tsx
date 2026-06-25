@@ -21,7 +21,13 @@ export function Login() {
         body: JSON.stringify({ email, password }),
       });
       login(data.token, data.user);
-      navigate("/");
+      if (data.user.role === "field_agent") {
+        navigate("/field-agent");
+      } else if (data.user.role === "admin" || data.user.role === "super_admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

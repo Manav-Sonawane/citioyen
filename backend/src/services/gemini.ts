@@ -100,3 +100,57 @@ export async function embedText(text: string): Promise<number[] | null> {
     return null;
   }
 }
+
+const verifySchema = z.object({
+  looksResolved: z.boolean(),
+  confidence: z.number().min(0).max(1),
+  reasoning: z.string(),
+});
+
+export type VerifyResolutionResponse = z.infer<typeof verifySchema>;
+
+export async function verifyResolution(
+  beforeImageBuffer: Buffer,
+  beforeMimeType: string,
+  afterImageBuffer: Buffer,
+  afterMimeType: string
+): Promise<VerifyResolutionResponse> {
+  const fallback: VerifyResolutionResponse = {
+    looksResolved: false,
+    confidence: 0,
+    reasoning: "Could not verify",
+  };
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    const prompt = `You are a civic issue resolution inspector. You are given two images:
+1. The FIRST image is the 'before' photo showing the originally reported civic issue (e.g. pothole, garbage, broken light).
+2. The SECOND image is the 'after' photo submitted by a worker claiming to have fixed it.
+
+Compare them and judge whether the after-photo shows the issue genuinely fixed versus the same problem still visible or an unrelated image.
+Return ONLY raw JSON (no markdown fences) in this exact shape:
+{"looksResolved": true/false, "confidence": 0.0-1.0, "reasoning": "Brief explanation"}
+
+Be strict but reasonable. If the after-photo clearly shows the location is cleaned/repaired, return true.`;
+
+    const contents: any[] = [
+      { text: prompt },
+      { inlineData: { data: beforeImageBuffer.toString("base64"), mimeType: beforeMimeType } },
+      { inlineData: { data: afterImageBuffer.toString("base64"), mimeType: afterMimeType } },
+    ];
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: contents,
+    });
+
+    const text = response.text?.trim() || "";
+    const jsonStr = text.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
+    const parsed = JSON.parse(jsonStr);
+    return verifySchema.parse(parsed);
+  } catch (error) {
+    console.error("Error in verifyResolution:", error);
+    return fallback;
+  }
+}

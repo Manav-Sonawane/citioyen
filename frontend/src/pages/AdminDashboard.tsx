@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../lib/auth";
 import { fetchApi } from "../lib/api";
 import { Link, Navigate } from "react-router-dom";
@@ -62,7 +62,62 @@ function DuplicateBadge({ duplicates }: { duplicates?: { id: string; description
   );
 }
 
+function ResolveButton({ issueId, onResolved }: { issueId: string; onResolved: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("afterPhoto", file);
+
+    setLoading(true);
+    try {
+      const data = await fetchApi(`/issues/${issueId}/resolve`, {
+        method: "POST",
+        body: formData,
+      });
+      alert(`AI Verification Result:\nResolved: ${data.verification.looksResolved}\nConfidence: ${data.verification.confidence}\nReasoning: ${data.verification.reasoning}`);
+      onResolved();
+    } catch (err: any) {
+      alert(`Failed to resolve: ${err.message}`);
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <input 
+        type="file" 
+        accept="image/*" 
+        style={{ display: "none" }} 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+      />
+      <button 
+        disabled={loading}
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          background: "#E8F5E9",
+          color: "#2E7D32",
+          border: "1px solid #C8E6C9",
+          padding: "4px 8px",
+          borderRadius: 4,
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: loading ? "not-allowed" : "pointer",
+          whiteSpace: "nowrap"
+        }}
+      >
+        {loading ? "Verifying..." : "✓ Mark Resolved (AI)"}
+      </button>
+    </>
+  );
+}
 
 const validTransitions: Record<string, string[]> = {
   reported: ["verified", "rejected"],
@@ -129,7 +184,7 @@ export function AdminDashboard() {
 
   return (
     <div style={{ background: "var(--bg)", minHeight: "100svh", padding: 24, fontFamily: "var(--sans)" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", background: "var(--surface)", padding: 24, borderRadius: 8, boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", background: "var(--surface)", padding: 24, borderRadius: 8, boxShadow: "var(--shadow-sm)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text-heading)" }}>Admin Dashboard</h1>
           <Link to="/" style={{ color: "var(--primary)", fontWeight: 600, textDecoration: "none" }}>← Back to Feed</Link>
@@ -148,6 +203,7 @@ export function AdminDashboard() {
                 <th style={{ padding: "12px 8px" }}>Date</th>
                 <th style={{ padding: "12px 8px" }}>Status</th>
                 <th style={{ padding: "12px 8px" }}>Assigned To</th>
+                <th style={{ padding: "12px 8px" }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -192,6 +248,14 @@ export function AdminDashboard() {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td style={{ padding: "12px 8px" }}>
+                      {issue.status !== "resolved" && issue.status !== "closed" && (
+                        <ResolveButton 
+                          issueId={issue.id} 
+                          onResolved={() => handleUpdate(issue.id, "resolved", issue.assignedTo)} 
+                        />
+                      )}
                     </td>
                   </tr>
                 );

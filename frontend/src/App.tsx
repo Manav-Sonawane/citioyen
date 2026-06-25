@@ -7,6 +7,7 @@ import { HomeFeed } from "./pages/HomeFeed";
 import { IssueDetail } from "./pages/IssueDetail";
 import { ReportIssue } from "./pages/ReportIssue";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { FieldAgentDashboard } from "./pages/FieldAgentDashboard";
 import { PublicDashboard } from "./pages/PublicDashboard";
 import { Leaderboard } from "./pages/Leaderboard";
 import "./App.css";
@@ -25,6 +26,7 @@ function App() {
         <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
         <Route path="/issues/:id" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/field-agent" element={<ProtectedRoute><FieldAgentDashboard /></ProtectedRoute>} />
       </Routes>
     </div>
   );
