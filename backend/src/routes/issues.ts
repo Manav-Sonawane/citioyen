@@ -9,9 +9,11 @@ import {
   issueStatusHistory,
   users,
   issueValidations,
+  categories,
 } from "../db/schema/index.js";
 import { requireAuth } from "../middleware/index.js";
 import { uploadBuffer } from "../services/storage.js";
+import { categorizeIssue } from "../services/gemini.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 
 export const issuesRouter = Router();
@@ -120,6 +122,44 @@ issuesRouter.post(
         .returning();
 
       mediaRows.push(row);
+    }
+
+    // Categorize Issue using AI
+    try {
+      const firstImage = files.find((f) => f.mimetype.startsWith("image/"));
+      const aiResult = await categorizeIssue(
+        description,
+        firstImage?.buffer,
+        firstImage?.mimetype
+      );
+
+      const [categoryRecord] = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.name, aiResult.category))
+        .limit(1);
+
+      const updateData: any = {
+        severity: aiResult.severity,
+        aiConfidence: aiResult.confidence,
+      };
+
+      if (categoryRecord) {
+        updateData.categoryId = categoryRecord.id;
+        const deadline = new Date();
+        deadline.setHours(deadline.getHours() + categoryRecord.defaultSlaHours);
+        updateData.slaDeadline = deadline;
+      }
+
+      const [updatedIssue] = await db
+        .update(issues)
+        .set(updateData)
+        .where(eq(issues.id, issue.id))
+        .returning();
+
+      Object.assign(issue, updatedIssue);
+    } catch (error) {
+      console.error("AI Categorization failed, continuing...", error);
     }
 
     // Fetch reporter info for the response
