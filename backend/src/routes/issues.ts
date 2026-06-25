@@ -270,6 +270,7 @@ issuesRouter.get("/", async (req, res) => {
         },
       },
       category: true,
+      statusHistory: true,
     },
   });
 
@@ -591,6 +592,68 @@ issuesRouter.post("/:id/resolve", requireAuth, upload.single("afterPhoto"), asyn
       stage: "resolution"
     });
 
+    const isVerified = verificationResult.looksResolved && verificationResult.confidence >= 0.6;
+
+    if (isVerified) {
+      const [updatedIssue] = await db.update(issues)
+        .set({ status: "resolved", updatedAt: new Date() })
+        .where(eq(issues.id, issueId))
+        .returning();
+
+      await db.insert(issueStatusHistory).values({
+        issueId,
+        fromStatus: currentIssue.status as any,
+        toStatus: "resolved",
+        changedBy: authReq.userId!,
+        note: `Resolution verified by AI: ${verificationResult.reasoning}`
+      });
+
+      res.json({ success: true, issue: updatedIssue, verification: verificationResult });
+    } else {
+      await db.insert(issueStatusHistory).values({
+        issueId,
+        fromStatus: currentIssue.status as any,
+        toStatus: currentIssue.status as any,
+        changedBy: authReq.userId!,
+        note: `AI could not confirm resolution (Confidence: ${Math.round(verificationResult.confidence * 100)}%): ${verificationResult.reasoning}`
+      });
+
+      const [updatedIssue] = await db.select().from(issues).where(eq(issues.id, issueId));
+      res.json({ success: false, issue: updatedIssue, verification: verificationResult });
+    }
+  } catch (err: any) {
+    console.error("Resolve error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- POST /:id/override — Admin manual override to resolved ---
+
+issuesRouter.post("/:id/override", requireAuth, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const issueId = req.params.id as string;
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, authReq.userId!),
+      columns: { role: true },
+    });
+
+    if (!user || !["admin", "super_admin"].includes(user.role)) {
+      res.status(403).json({ error: "Only admins can override issue resolution" });
+      return;
+    }
+
+    const currentIssue = await db.query.issues.findFirst({
+      where: eq(issues.id, issueId),
+      columns: { status: true },
+    });
+
+    if (!currentIssue) {
+      res.status(404).json({ error: "Issue not found" });
+      return;
+    }
+
     const [updatedIssue] = await db.update(issues)
       .set({ status: "resolved", updatedAt: new Date() })
       .where(eq(issues.id, issueId))
@@ -601,12 +664,12 @@ issuesRouter.post("/:id/resolve", requireAuth, upload.single("afterPhoto"), asyn
       fromStatus: currentIssue.status as any,
       toStatus: "resolved",
       changedBy: authReq.userId!,
-      note: `Resolution verified by AI: ${verificationResult.reasoning}`
+      note: "Manually resolved by admin override"
     });
 
-    res.json({ issue: updatedIssue, verification: verificationResult });
+    res.json({ success: true, issue: updatedIssue });
   } catch (err: any) {
-    console.error("Resolve error:", err);
+    console.error("Override error:", err);
     res.status(500).json({ error: err.message });
   }
 });

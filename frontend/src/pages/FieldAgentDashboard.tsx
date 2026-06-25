@@ -30,8 +30,12 @@ function ResolveButton({ issueId, onResolved }: { issueId: string; onResolved: (
         method: "POST",
         body: formData,
       });
-      alert(`AI Verification Result:\nResolved: ${data.verification.looksResolved}\nConfidence: ${data.verification.confidence}\nReasoning: ${data.verification.reasoning}`);
-      onResolved();
+      if (!data.success) {
+        alert(`AI could not confirm resolution:\nReasoning: ${data.verification.reasoning}\n\nThe issue remains open for further work or admin review.`);
+      } else {
+        alert(`AI Verification Result:\nResolved: ${data.verification.looksResolved}\nConfidence: ${data.verification.confidence}\nReasoning: ${data.verification.reasoning}`);
+        onResolved();
+      }
     } catch (err: any) {
       alert(`Failed to resolve: ${err.message}`);
     } finally {

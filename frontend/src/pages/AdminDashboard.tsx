@@ -20,6 +20,8 @@ interface Issue {
   reporter: { id: string; name: string } | null;
   possibleDuplicateCount?: number;
   possibleDuplicates?: { id: string; description: string }[];
+  media?: { url: string; mediaType: string; stage: string }[];
+  statusHistory?: { note: string | null; createdAt: string }[];
 }
 
 function DuplicateBadge({ duplicates }: { duplicates?: { id: string; description: string }[] }) {
@@ -79,8 +81,12 @@ function ResolveButton({ issueId, onResolved }: { issueId: string; onResolved: (
         method: "POST",
         body: formData,
       });
-      alert(`AI Verification Result:\nResolved: ${data.verification.looksResolved}\nConfidence: ${data.verification.confidence}\nReasoning: ${data.verification.reasoning}`);
-      onResolved();
+      if (!data.success) {
+        alert(`AI could not confirm resolution:\nReasoning: ${data.verification.reasoning}\n\nThe issue remains open for further work or admin review.`);
+      } else {
+        alert(`AI Verification Result:\nResolved: ${data.verification.looksResolved}\nConfidence: ${data.verification.confidence}\nReasoning: ${data.verification.reasoning}`);
+        onResolved();
+      }
     } catch (err: any) {
       alert(`Failed to resolve: ${err.message}`);
     } finally {
@@ -110,12 +116,60 @@ function ResolveButton({ issueId, onResolved }: { issueId: string; onResolved: (
           fontSize: 12,
           fontWeight: 600,
           cursor: loading ? "not-allowed" : "pointer",
-          whiteSpace: "nowrap"
+          whiteSpace: "nowrap",
+          width: "100%",
+          marginBottom: 4
         }}
       >
         {loading ? "Verifying..." : "✓ Mark Resolved (AI)"}
       </button>
     </>
+  );
+}
+
+function OverrideButton({ issueId, onResolved }: { issueId: string; onResolved: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleOverride = async () => {
+    if (!window.confirm("Are you sure you want to manually override and resolve this issue without AI verification?")) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await fetchApi(`/issues/${issueId}/override`, {
+        method: "POST"
+      });
+      if (data.success) {
+        onResolved();
+      } else {
+        alert(data.error || "Failed to override");
+      }
+    } catch (err: any) {
+      alert(`Failed to override: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button 
+      disabled={loading}
+      onClick={handleOverride}
+      style={{
+        background: "#FFF3E0",
+        color: "#E65100",
+        border: "1px solid #FFE0B2",
+        padding: "4px 8px",
+        borderRadius: 4,
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: loading ? "not-allowed" : "pointer",
+        whiteSpace: "nowrap",
+        width: "100%"
+      }}
+    >
+      {loading ? "Resolving..." : "⚠ Override & Resolve"}
+    </button>
   );
 }
 
@@ -251,10 +305,52 @@ export function AdminDashboard() {
                     </td>
                     <td style={{ padding: "12px 8px" }}>
                       {issue.status !== "resolved" && issue.status !== "closed" && (
-                        <ResolveButton 
-                          issueId={issue.id} 
-                          onResolved={() => handleUpdate(issue.id, "resolved", issue.assignedTo)} 
-                        />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <ResolveButton 
+                            issueId={issue.id} 
+                            onResolved={() => handleUpdate(issue.id, "resolved", issue.assignedTo)} 
+                          />
+                          
+                          {(() => {
+                            // Find the most recent failed verification note (sort descending)
+                            const failedNotes = (issue.statusHistory || [])
+                              .filter(h => h.note && h.note.startsWith("AI could not confirm resolution"))
+                              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                            
+                            const latestFailure = failedNotes[0];
+                            if (!latestFailure) return null;
+
+                            const reportImg = issue.media?.find(m => m.stage === "report" && m.mediaType === "image");
+                            const resolutionImg = issue.media?.find(m => m.stage === "resolution" && m.mediaType === "image");
+
+                            return (
+                              <div style={{ background: "#FFEBEE", padding: 8, borderRadius: 4, marginTop: 4, border: "1px solid #FFCDD2" }}>
+                                <div style={{ fontSize: 11, color: "#C62828", fontWeight: 600, marginBottom: 4 }}>
+                                  AI Rejected: {latestFailure.note}
+                                </div>
+                                <div style={{ display: "flex", gap: 4 }}>
+                                  {reportImg && (
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontSize: 9, color: "#7F1D1D", fontWeight: 600 }}>Before</div>
+                                      <img src={reportImg.url} alt="Before" style={{ width: "100%", height: 60, objectFit: "cover", borderRadius: 2 }} />
+                                    </div>
+                                  )}
+                                  {resolutionImg && (
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontSize: 9, color: "#7F1D1D", fontWeight: 600 }}>After</div>
+                                      <img src={resolutionImg.url} alt="After" style={{ width: "100%", height: 60, objectFit: "cover", borderRadius: 2 }} />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          <OverrideButton 
+                            issueId={issue.id} 
+                            onResolved={() => handleUpdate(issue.id, "resolved", issue.assignedTo)} 
+                          />
+                        </div>
                       )}
                     </td>
                   </tr>
