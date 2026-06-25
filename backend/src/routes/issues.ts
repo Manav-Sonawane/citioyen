@@ -10,10 +10,11 @@ import {
   users,
   issueValidations,
   categories,
+  issueEmbeddings,
 } from "../db/schema/index.js";
 import { requireAuth } from "../middleware/index.js";
 import { uploadBuffer } from "../services/storage.js";
-import { categorizeIssue } from "../services/gemini.js";
+import { categorizeIssue, embedText } from "../services/gemini.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 
 export const issuesRouter = Router();
@@ -162,6 +163,35 @@ issuesRouter.post(
       console.error("AI Categorization failed, continuing...", error);
     }
 
+    // Embed Description for Duplicate Detection
+    let possibleDuplicates: any[] = [];
+    try {
+      const vector = await embedText(description);
+      if (vector) {
+        await db.insert(issueEmbeddings).values({
+          issueId: issue.id,
+          embedding: vector,
+        });
+
+        const vectorStr = JSON.stringify(vector);
+        const distanceSq = sql<number>`${issueEmbeddings.embedding} <-> ${vectorStr}`;
+        
+        possibleDuplicates = await db
+          .select({
+            id: issues.id,
+            description: issues.description,
+            distance: distanceSq,
+          })
+          .from(issueEmbeddings)
+          .innerJoin(issues, eq(issueEmbeddings.issueId, issues.id))
+          .where(sql`${distanceSq} < 0.3 AND ${issues.id} != ${issue.id}`)
+          .orderBy(distanceSq)
+          .limit(3);
+      }
+    } catch (error) {
+      console.error("Embedding generation/similarity search failed:", error);
+    }
+
     // Fetch reporter info for the response
     const [reporter] = await db
       .select({
@@ -181,6 +211,7 @@ issuesRouter.post(
         media: mediaRows,
         reporter,
       },
+      possibleDuplicates,
     });
   }
 );

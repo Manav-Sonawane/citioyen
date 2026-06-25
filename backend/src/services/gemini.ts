@@ -80,3 +80,23 @@ Description: ${description}`;
     return fallback;
   }
 }
+
+/**
+ * Generate a 768-dimensional embedding for the given text.
+ * Fails safely by returning null instead of throwing.
+ */
+export async function embedText(text: string): Promise<number[] | null> {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.embedContent({
+      model: "gemini-embedding-001",
+      contents: text,
+      config: { outputDimensionality: 768 },
+    });
+    
+    return response.embeddings?.[0]?.values || null;
+  } catch (error) {
+    console.error("Error in embedText:", error);
+    return null;
+  }
+}
