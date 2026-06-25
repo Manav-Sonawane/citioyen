@@ -8,6 +8,7 @@ import { IssueDetail } from "./pages/IssueDetail";
 import { ReportIssue } from "./pages/ReportIssue";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { PublicDashboard } from "./pages/PublicDashboard";
+import { Leaderboard } from "./pages/Leaderboard";
 import "./App.css";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<PublicDashboard />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         
         <Route path="/" element={<ProtectedRoute><HomeFeed /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />

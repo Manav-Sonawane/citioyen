@@ -89,9 +89,12 @@ export function Login() {
           <Link to="/signup" style={{ color: "var(--primary)", fontWeight: 600 }}>Create one</Link>
         </p>
 
-        <div style={{ textAlign: "center", marginTop: 24, padding: "16px 0", borderTop: "1px solid var(--border)" }}>
+        <div style={{ textAlign: "center", marginTop: 24, padding: "16px 0", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 12 }}>
           <Link to="/dashboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
             📊 View Public City Dashboard
+          </Link>
+          <Link to="/leaderboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
+            🏆 View Citizen Leaderboard
           </Link>
         </div>
       </div>

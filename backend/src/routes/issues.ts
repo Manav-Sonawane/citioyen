@@ -100,6 +100,11 @@ issuesRouter.post(
       changedBy: authReq.userId!,
     });
 
+    // Increment reporter's reputation by 10
+    await db.update(users)
+      .set({ reputationScore: sql`${users.reputationScore} + 10` })
+      .where(eq(users.id, authReq.userId!));
+
     // Upload media files and insert rows
     const files = (req.files as Express.Multer.File[]) || [];
     const mediaRows = [];
@@ -307,8 +312,10 @@ issuesRouter.post("/:id/validate", requireAuth, async (req, res) => {
         );
 
       let delta = 0;
+      let firstVote = false;
       if (!existing) {
         if (voteType === "confirm") delta = 1;
+        firstVote = true;
       } else {
         if (existing.voteType === "confirm" && voteType === "dispute") delta = -1;
         else if (existing.voteType === "dispute" && voteType === "confirm") delta = 1;
@@ -322,6 +329,12 @@ issuesRouter.post("/:id/validate", requireAuth, async (req, res) => {
           target: [issueValidations.issueId, issueValidations.userId],
           set: { voteType },
         });
+
+      if (firstVote) {
+        await tx.update(users)
+          .set({ reputationScore: sql`${users.reputationScore} + 2` })
+          .where(eq(users.id, userId));
+      }
 
       // 3. Apply delta if needed
       if (delta !== 0) {

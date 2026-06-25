@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "../db/db.js";
 import { users } from "../db/schema/index.js";
 import { authRouter } from "./auth.js";
@@ -20,6 +20,19 @@ router.use("/stats", statsRouter);
 
 router.get("/health", (req, res) => {
   res.json({ status: "OK", expressVersion: 5 });
+});
+
+router.get("/users/leaderboard", async (req, res) => {
+  const topUsers = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      reputationScore: users.reputationScore,
+    })
+    .from(users)
+    .orderBy(desc(users.reputationScore))
+    .limit(20);
+  res.json({ leaderboard: topUsers });
 });
 
 router.get("/users", requireAuth, async (req, res) => {

@@ -91,6 +91,7 @@ export function HomeFeed() {
           <span style={{ fontWeight: 700, color: "var(--primary)", borderBottom: "2px solid var(--primary)" }}>Feed</span>
           <Link to="/map" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Map</Link>
           <Link to="/dashboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Dashboard</Link>
+          <Link to="/leaderboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Leaderboard</Link>
           {user && ["admin", "super_admin"].includes(user.role) && (
             <Link to="/admin" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Admin</Link>
           )}
