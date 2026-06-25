@@ -88,6 +88,12 @@ export function Login() {
           Don't have an account?{" "}
           <Link to="/signup" style={{ color: "var(--primary)", fontWeight: 600 }}>Create one</Link>
         </p>
+
+        <div style={{ textAlign: "center", marginTop: 24, padding: "16px 0", borderTop: "1px solid var(--border)" }}>
+          <Link to="/dashboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
+            📊 View Public City Dashboard
+          </Link>
+        </div>
       </div>
     </div>
   );

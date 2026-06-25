@@ -90,6 +90,7 @@ export function HomeFeed() {
         <div style={{ display: "flex", gap: 16, flex: 1 }}>
           <span style={{ fontWeight: 700, color: "var(--primary)", borderBottom: "2px solid var(--primary)" }}>Feed</span>
           <Link to="/map" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Map</Link>
+          <Link to="/dashboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Dashboard</Link>
           {user && ["admin", "super_admin"].includes(user.role) && (
             <Link to="/admin" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Admin</Link>
           )}
