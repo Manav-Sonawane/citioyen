@@ -168,6 +168,7 @@ function ReportIssueInner() {
   const [submitting, setSubmitting] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [successData, setSuccessData] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reverseGeocode = useReverseGeocode();
@@ -262,7 +263,7 @@ function ReportIssueInner() {
         method: "POST",
         body: formData,
       });
-      navigate(`/issues/${data.issue.id}`);
+      setSuccessData(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -316,6 +317,45 @@ function ReportIssueInner() {
   };
 
   const mapCenter = coords ?? MUMBAI;
+
+  if (successData) {
+    const duplicates = successData.possibleDuplicates || [];
+    return (
+      <div style={s.container}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+          <h2 style={{ color: "var(--text-heading)", margin: 0 }}>Your report was submitted successfully</h2>
+          <p style={{ color: "var(--text-muted)", marginTop: 8 }}>Thank you for keeping the community safe!</p>
+        </div>
+
+        {duplicates.length > 0 && (
+          <div style={{ marginTop: 32, background: "var(--bg)", padding: 16, borderRadius: 8, border: "1px solid var(--border)" }}>
+            <h3 style={{ fontSize: 16, marginTop: 0, marginBottom: 12, color: "var(--text-heading)" }}>We found {duplicates.length} similar report(s) nearby:</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {duplicates.map((dup: any) => (
+                <Link 
+                  key={dup.id} 
+                  to={`/issues/${dup.id}`}
+                  style={{ display: "block", padding: 12, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, textDecoration: "none", color: "inherit" }}
+                >
+                  <p style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {dup.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button 
+          onClick={() => navigate("/")} 
+          style={{ ...s.submitBtn, marginTop: 32, backgroundColor: "var(--primary)" }}
+        >
+          Continue
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>
