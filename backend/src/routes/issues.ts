@@ -245,7 +245,44 @@ issuesRouter.get("/", async (req, res) => {
     },
   });
 
-  res.json({ issues: result });
+  const enhancedIssues = await Promise.all(
+    result.map(async (issue) => {
+      let possibleDuplicates: any[] = [];
+      try {
+        const [embeddingRow] = await db
+          .select({ embedding: issueEmbeddings.embedding })
+          .from(issueEmbeddings)
+          .where(eq(issueEmbeddings.issueId, issue.id));
+
+        if (embeddingRow?.embedding) {
+          const vectorStr = JSON.stringify(embeddingRow.embedding);
+          const distanceSq = sql<number>`${issueEmbeddings.embedding} <-> ${vectorStr}`;
+
+          possibleDuplicates = await db
+            .select({
+              id: issues.id,
+              description: issues.description,
+              distance: distanceSq,
+            })
+            .from(issueEmbeddings)
+            .innerJoin(issues, eq(issueEmbeddings.issueId, issues.id))
+            .where(sql`${distanceSq} < 0.3 AND ${issues.id} != ${issue.id}`)
+            .orderBy(distanceSq)
+            .limit(3);
+        }
+      } catch (err) {
+        console.error("Failed to compute duplicates for issue:", issue.id, err);
+      }
+
+      return {
+        ...issue,
+        possibleDuplicates,
+        possibleDuplicateCount: possibleDuplicates.length,
+      };
+    })
+  );
+
+  res.json({ issues: enhancedIssues });
 });
 
 // --- GET /:id — Full issue detail with ordered status history ---

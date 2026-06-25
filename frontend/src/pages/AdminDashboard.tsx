@@ -18,6 +18,48 @@ interface Issue {
   assignedTo: string | null;
   createdAt: string;
   reporter: { id: string; name: string } | null;
+  possibleDuplicateCount?: number;
+  possibleDuplicates?: { id: string; description: string }[];
+}
+
+function DuplicateBadge({ duplicates }: { duplicates?: { id: string; description: string }[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!duplicates || duplicates.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button 
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          background: "#FFFAF0",
+          border: "1px solid #FBD38D",
+          color: "#DD6B20",
+          padding: "4px 8px",
+          borderRadius: 4,
+          fontSize: 11,
+          fontWeight: 700,
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4
+        }}
+      >
+        ⚠ {duplicates.length} possible duplicate(s)
+      </button>
+      {expanded && (
+        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+          {duplicates.map(dup => (
+            <div key={dup.id} style={{ background: "var(--bg)", border: "1px solid var(--border)", padding: "6px 8px", borderRadius: 4, fontSize: 12 }}>
+              <Link to={`/issues/${dup.id}`} style={{ color: "var(--primary)", textDecoration: "none", fontWeight: 600 }}>View</Link>
+              <span style={{ marginLeft: 6, color: "var(--text-muted)" }}>
+                {dup.description.slice(0, 50)}{dup.description.length > 50 ? "..." : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 
@@ -120,6 +162,7 @@ export function AdminDashboard() {
                       <Link to={`/issues/${issue.id}`} style={{ fontWeight: 600 }}>
                         {issue.title || issue.description.slice(0, 30) + "..."}
                       </Link>
+                      <DuplicateBadge duplicates={issue.possibleDuplicates} />
                     </td>
                     <td style={{ padding: "12px 8px" }}>{issue.reporter?.name || "Unknown"}</td>
                     <td style={{ padding: "12px 8px" }}>{fmtDate(issue.createdAt)}</td>
