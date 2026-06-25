@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { checkAndEscalateSlaBreaches } from "../services/escalation.js";
 import { issues, categories } from "../db/schema/index.js";
 import { count, eq, inArray, isNotNull, sql, notInArray, and } from "drizzle-orm";
 
 export const statsRouter = Router();
 
 statsRouter.get("/", async (req, res) => {
+  // Hackathon-scale inline check for SLA breaches
+  checkAndEscalateSlaBreaches().catch(console.error);
+
   try {
     // 1. Total issue count
     const [totalIssuesResult] = await db.select({ value: count() }).from(issues);

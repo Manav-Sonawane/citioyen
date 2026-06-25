@@ -230,13 +230,15 @@ function StatusTimeline({ history }: { history: StatusHistoryEntry[] }) {
                 <div
                   style={{
                     fontSize: 13,
-                    color: "#444",
-                    backgroundColor: "#F0F4F8",
-                    padding: "6px 10px",
+                    color: entry.note.startsWith("SLA breached") ? "#C62828" : "#444",
+                    backgroundColor: entry.note.startsWith("SLA breached") ? "#FFEBEE" : "#F0F4F8",
+                    padding: "8px 12px",
                     borderRadius: 6,
-                    borderLeft: "3px solid #D0D7E3",
+                    borderLeft: `4px solid ${entry.note.startsWith("SLA breached") ? "#E53E3E" : "#D0D7E3"}`,
+                    fontWeight: entry.note.startsWith("SLA breached") ? 600 : 400,
                   }}
                 >
+                  {entry.note.startsWith("SLA breached") && <span style={{ marginRight: 6 }}>🚨</span>}
                   {entry.note}
                 </div>
               )}

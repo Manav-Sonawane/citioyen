@@ -15,6 +15,7 @@ import {
 import { requireAuth } from "../middleware/index.js";
 import { uploadBuffer } from "../services/storage.js";
 import { categorizeIssue, embedText } from "../services/gemini.js";
+import { checkAndEscalateSlaBreaches } from "../services/escalation.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 
 export const issuesRouter = Router();
@@ -224,6 +225,9 @@ issuesRouter.post(
 // --- GET / — List issues (newest first, optional ?status= filter) ---
 
 issuesRouter.get("/", async (req, res) => {
+  // Hackathon-scale inline check for SLA breaches
+  checkAndEscalateSlaBreaches().catch(console.error);
+
   const statusFilter = req.query.status as string | undefined;
 
   const result = await db.query.issues.findMany({
