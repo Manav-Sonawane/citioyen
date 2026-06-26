@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { z } from "zod";
 
 const responseSchema = z.object({
@@ -151,6 +151,75 @@ Be strict but reasonable. If the after-photo clearly shows the location is clean
     return verifySchema.parse(parsed);
   } catch (error) {
     console.error("Error in verifyResolution:", error);
+    return fallback;
+  }
+}
+
+export async function extractReportFromChat(
+  conversationHistory: { role: "user" | "model"; text: string }[]
+): Promise<{
+  description: string | null;
+  locationText: string | null;
+  categoryHint: string | null;
+  readyToSubmit: boolean;
+  followUpQuestion: string | null;
+}> {
+  const fallback = {
+    description: null,
+    locationText: null,
+    categoryHint: null,
+    readyToSubmit: false,
+    followUpQuestion: "Sorry, I had trouble understanding that — could you describe the issue again?",
+  };
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const systemInstruction = `You are a civic issue reporting assistant. Analyze the conversation history and extract the current state of the report.
+Rules:
+1. Extract 'description' and 'locationText' from the user's messages if provided.
+2. Guess 'categoryHint' if possible (e.g. pothole, streetlight, garbage, etc.) or set to null.
+3. 'readyToSubmit' must be true ONLY if both 'description' and 'locationText' are present AND 'description' is detailed enough (at least 10 characters).
+4. If 'readyToSubmit' is false, 'followUpQuestion' MUST contain a natural, specific question asking the user for the missing information.
+5. If 'readyToSubmit' is true, 'followUpQuestion' should be null.`;
+
+    const contents = conversationHistory.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }]
+    }));
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: contents,
+      config: {
+        systemInstruction: systemInstruction,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            description: { type: Type.STRING, nullable: true },
+            locationText: { type: Type.STRING, nullable: true },
+            categoryHint: { type: Type.STRING, nullable: true },
+            readyToSubmit: { type: Type.BOOLEAN },
+            followUpQuestion: { type: Type.STRING, nullable: true }
+          },
+          required: ["readyToSubmit"]
+        }
+      }
+    });
+
+    const text = response.text?.trim() || "";
+    if (!text) return fallback;
+    const parsed = JSON.parse(text);
+    return {
+      description: parsed.description || null,
+      locationText: parsed.locationText || null,
+      categoryHint: parsed.categoryHint || null,
+      readyToSubmit: !!parsed.readyToSubmit,
+      followUpQuestion: parsed.followUpQuestion || null
+    };
+  } catch (error) {
+    console.error("Error in extractReportFromChat:", error);
     return fallback;
   }
 }

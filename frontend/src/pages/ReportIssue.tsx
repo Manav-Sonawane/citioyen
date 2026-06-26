@@ -2,11 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   APIProvider,
-  Map,
-  AdvancedMarker,
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
 import { fetchApi } from "../lib/api";
+import { MapLocationPicker, useReverseGeocode } from "../components/MapLocationPicker";
 
 const MAX_FILES = 5;
 const ACCEPTED_TYPES = "image/jpeg,image/png,image/webp,video/mp4,video/quicktime";
@@ -76,80 +75,7 @@ function PlacesAutocompleteInput({
   );
 }
 
-// ---------- Map Picker sub-component ----------
 
-interface MapPickerProps {
-  center: LatLng;
-  markerPos: LatLng | null;
-  onMapClick: (lat: number, lng: number) => void;
-}
-
-function MapPicker({ center, markerPos, onMapClick }: MapPickerProps) {
-  return (
-    <div style={{ height: 260, borderRadius: 8, overflow: "hidden", border: "1px solid #ccc" }}>
-      <Map
-        defaultCenter={center}
-        defaultZoom={13}
-        mapId="report-picker"
-        style={{ width: "100%", height: "100%" }}
-        gestureHandling="greedy"
-        disableDefaultUI
-        onClick={(e) => {
-          const lat = e.detail.latLng?.lat;
-          const lng = e.detail.latLng?.lng;
-          if (lat != null && lng != null) onMapClick(lat, lng);
-        }}
-      >
-        {markerPos && (
-          <AdvancedMarker position={markerPos}>
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: "#e53e3e",
-                border: "2.5px solid #fff",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
-              }}
-            />
-          </AdvancedMarker>
-        )}
-      </Map>
-    </div>
-  );
-}
-
-// ---------- Geocoder hook ----------
-// Wraps useMapsLibrary("geocoding") and exposes a reverse-geocode function
-
-function useReverseGeocode() {
-  const geocodingLib = useMapsLibrary("geocoding");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const geocoderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (geocodingLib) geocoderRef.current = new geocodingLib.Geocoder();
-  }, [geocodingLib]);
-
-  const reverseGeocode = useCallback(
-    (lat: number, lng: number): Promise<string> => {
-      return new Promise((resolve) => {
-        if (!geocoderRef.current) { resolve(""); return; }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        geocoderRef.current.geocode({ location: { lat, lng } }, (results: any, status: any) => {
-          if (status === "OK" && results?.[0]) {
-            resolve(results[0].formatted_address);
-          } else {
-            resolve("");
-          }
-        });
-      });
-    },
-    []
-  );
-
-  return reverseGeocode;
-}
 
 // ---------- Inner form (inside APIProvider) ----------
 
@@ -210,9 +136,9 @@ function ReportIssueInner() {
 
   // ---------- Map click ----------
 
-  const handleMapClick = useCallback(
-    async (lat: number, lng: number) => {
-      await applyLocation(lat, lng);
+  const handleMapLocationSelect = useCallback(
+    async (lat: number, lng: number, address: string) => {
+      await applyLocation(lat, lng, address);
     },
     [applyLocation]
   );
@@ -430,10 +356,10 @@ function ReportIssueInner() {
               <p style={{ ...s.hint, marginBottom: 6 }}>
                 Click the map to pin a location. The address field will update automatically.
               </p>
-              <MapPicker
+              <MapLocationPicker
                 center={mapCenter}
                 markerPos={coords}
-                onMapClick={handleMapClick}
+                onLocationSelect={handleMapLocationSelect}
               />
             </div>
           )}

@@ -5,6 +5,7 @@ import { users } from "../db/schema/index.js";
 import { authRouter } from "./auth.js";
 import { issuesRouter } from "./issues.js";
 import { statsRouter } from "./stats.js";
+import { chatRouter } from "./chat.js";
 import { requireAuth } from "../middleware/index.js";
 
 export const router = Router();
@@ -17,6 +18,9 @@ router.use("/issues", issuesRouter);
 
 // Mount stats routes
 router.use("/stats", statsRouter);
+
+// Mount chat routes
+router.use("/chat", chatRouter);
 
 router.get("/health", (req, res) => {
   res.json({ status: "OK", expressVersion: 5 });

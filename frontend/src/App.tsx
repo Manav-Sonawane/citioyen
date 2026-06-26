@@ -6,6 +6,7 @@ import { MapView } from "./pages/MapView";
 import { HomeFeed } from "./pages/HomeFeed";
 import { IssueDetail } from "./pages/IssueDetail";
 import { ReportIssue } from "./pages/ReportIssue";
+import { ChatReport } from "./pages/ChatReport";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { FieldAgentDashboard } from "./pages/FieldAgentDashboard";
 import { PublicDashboard } from "./pages/PublicDashboard";
@@ -24,6 +25,7 @@ function App() {
         <Route path="/" element={<ProtectedRoute><HomeFeed /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
         <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
+        <Route path="/chat-report" element={<ProtectedRoute><ChatReport /></ProtectedRoute>} />
         <Route path="/issues/:id" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/field-agent" element={<ProtectedRoute><FieldAgentDashboard /></ProtectedRoute>} />

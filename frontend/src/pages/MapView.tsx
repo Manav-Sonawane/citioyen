@@ -276,31 +276,55 @@ export function MapView() {
         </button>
       </div>
 
-      {/* Floating "Report an Issue" button */}
-      <button
-        onClick={() => navigate("/report")}
-        style={{
-          position: "absolute",
-          bottom: 32,
-          left: "50%",
-          transform: "translateX(-50%)",
-          padding: "13px 30px",
-          backgroundColor: "#1565C0",
-          color: "#fff",
-          border: "none",
-          borderRadius: 999,
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: "pointer",
-          boxShadow: "0 4px 16px rgba(21,101,192,0.45)",
-          zIndex: 10,
-          fontFamily: "var(--sans, sans-serif)",
-          whiteSpace: "nowrap",
-          letterSpacing: "0.01em",
-        }}
-      >
-        + Report an Issue
-      </button>
+      {/* Floating Action Buttons */}
+      <div style={{
+        position: "absolute",
+        bottom: 32,
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        gap: "12px",
+        zIndex: 10
+      }}>
+        <button
+          onClick={() => navigate("/report")}
+          style={{
+            padding: "13px 24px",
+            backgroundColor: "#1565C0",
+            color: "#fff",
+            border: "none",
+            borderRadius: 999,
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(21,101,192,0.45)",
+            fontFamily: "var(--sans, sans-serif)",
+            whiteSpace: "nowrap",
+            letterSpacing: "0.01em",
+          }}
+        >
+          + Report an Issue
+        </button>
+        <button
+          onClick={() => navigate("/chat-report")}
+          style={{
+            padding: "13px 24px",
+            backgroundColor: "#fff",
+            color: "#1565C0",
+            border: "2px solid #1565C0",
+            borderRadius: 999,
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(21,101,192,0.2)",
+            fontFamily: "var(--sans, sans-serif)",
+            whiteSpace: "nowrap",
+            letterSpacing: "0.01em",
+          }}
+        >
+          💬 Report via Chat
+        </button>
+      </div>
     </div>
   );
 }
