@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { wards } from "./wards.js";
+import { wards, ward_aliases } from "./wards.js";
 import { users } from "./users.js";
 import { categories } from "./categories.js";
 import { issues } from "./issues.js";
@@ -11,6 +11,14 @@ import { issueValidations } from "./issueValidations.js";
 export const wardsRelations = relations(wards, ({ many }) => ({
   users: many(users),
   issues: many(issues),
+  aliases: many(ward_aliases),
+}));
+
+export const wardAliasesRelations = relations(ward_aliases, ({ one }) => ({
+  ward: one(wards, {
+    fields: [ward_aliases.wardId],
+    references: [wards.id],
+  }),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({

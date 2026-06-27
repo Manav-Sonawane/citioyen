@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchApi } from "../lib/api";
+import { useAuth } from "../lib/auth";
 
 // ---------- Types ----------
 
@@ -33,9 +34,10 @@ interface Issue {
   lat: number;
   lng: number;
   addressText: string | null;
+  landmark: string | null;
   createdAt: string;
   updatedAt: string;
-  reporter: { id: string; name: string; email: string; avatarUrl?: string } | null;
+  reporter: { id: string; name: string; email: string; phone?: string; avatarUrl?: string } | null;
   category: Category | null;
   media: MediaRow[];
   statusHistory: StatusHistoryEntry[];
@@ -266,6 +268,8 @@ const headingStyle: React.CSSProperties = {
 export function IssueDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canViewDetails = user && ["admin", "super_admin", "field_agent"].includes(user.role);
 
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -359,18 +363,58 @@ export function IssueDetail() {
 
         <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>
           Reported {fmtDate(issue.createdAt)}
-          {issue.reporter && (
-            <> by <strong style={{ color: "#555" }}>{issue.reporter.name}</strong></>
-          )}
           {issue.category && (
             <> · <span style={{ color: "#1565C0" }}>{issue.category.department}</span></>
           )}
         </div>
-
-        {issue.addressText && (
-          <div style={{ fontSize: 13, color: "#666" }}>📍 {issue.addressText}</div>
-        )}
       </div>
+
+      {/* Location */}
+      <section style={{ marginBottom: 28, background: "#fff", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+        {issue.addressText && (
+          <p style={{ fontSize: 18, color: "#1A202C", margin: "0 0 8px 0", fontWeight: 600 }}>
+            📍 {issue.addressText}
+          </p>
+        )}
+        {issue.landmark && (
+          <p style={{ fontSize: 15, color: "#4A5568", margin: "0 0 12px 0" }}>
+            <strong>Near:</strong> {issue.landmark}
+          </p>
+        )}
+        <div style={{ fontSize: 13, color: "#718096", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <span>Lat: {issue.lat.toFixed(6)} · Lng: {issue.lng.toFixed(6)}</span>
+          <a
+            href={`https://maps.google.com/?q=${issue.lat},${issue.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#1565C0", fontWeight: 600, textDecoration: "none" }}
+          >
+            Open in Google Maps ↗
+          </a>
+        </div>
+      </section>
+
+      {/* Reporter Section */}
+      {issue.reporter && (
+        <section style={{ marginBottom: 28, background: "#fff", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+          <h3 style={{ margin: "0 0 8px 0", fontSize: 15, color: "#2D3748" }}>Reporter</h3>
+          <div style={{ fontSize: 14, color: "#4A5568" }}>
+            <strong>Name:</strong> {issue.reporter.name}
+            {canViewDetails && (
+              <>
+                <br />
+                <strong>Email:</strong> {issue.reporter.email}
+                {issue.reporter.phone && (
+                  <>
+                    <br />
+                    <strong>Phone:</strong> {issue.reporter.phone}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Description */}
       <section style={{ marginBottom: 28 }}>
@@ -428,21 +472,7 @@ export function IssueDetail() {
       {/* Status timeline */}
       <StatusTimeline history={issue.statusHistory} />
 
-      {/* Location */}
-      <section>
-        <h2 style={headingStyle}>Location</h2>
-        <p style={{ fontSize: 13, color: "#555", margin: 0 }}>
-          Lat: <strong>{issue.lat.toFixed(6)}</strong> · Lng: <strong>{issue.lng.toFixed(6)}</strong>
-        </p>
-        <a
-          href={`https://maps.google.com/?q=${issue.lat},${issue.lng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: 13, color: "#1565C0", display: "inline-block", marginTop: 6, fontWeight: 600 }}
-        >
-          Open in Google Maps ↗
-        </a>
-      </section>
+
     </div>
   );
 }

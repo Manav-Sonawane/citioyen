@@ -139,6 +139,7 @@ export function ChatReportInner() {
     formData.append("lat", String(extractedData.lat));
     formData.append("lng", String(extractedData.lng));
     if (extractedData.addressText) formData.append("addressText", extractedData.addressText);
+    if (extractedData.landmark) formData.append("landmark", extractedData.landmark);
     if (extractedData.wardId) formData.append("wardId", extractedData.wardId);
     if (attachedImage) formData.append("media", attachedImage);
 

@@ -86,6 +86,7 @@ function ReportIssueInner() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [addressText, setAddressText] = useState("");
+  const [landmark, setLandmark] = useState("");
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [files, setFiles] = useState<File[]>([]);
 
@@ -181,6 +182,7 @@ function ReportIssueInner() {
     formData.append("lng", String(coords.lng));
     if (title.trim()) formData.append("title", title.trim());
     if (addressText.trim()) formData.append("addressText", addressText.trim());
+    if (landmark.trim()) formData.append("landmark", landmark.trim());
     files.forEach((file) => formData.append("media", file));
 
     setSubmitting(true);
@@ -371,6 +373,20 @@ function ReportIssueInner() {
               {addressText && <> — {addressText}</>}
             </div>
           )}
+        </div>
+
+        {/* Landmark */}
+        <div style={s.group}>
+          <label style={s.label}>
+            Landmark <span style={{ fontWeight: "normal", color: "#777" }}>(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={landmark}
+            onChange={(e) => setLandmark(e.target.value)}
+            placeholder="e.g. Near City Station"
+            style={s.input}
+          />
         </div>
 
         {/* Media Upload */}

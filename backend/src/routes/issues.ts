@@ -55,6 +55,7 @@ const createIssueSchema = z.object({
   lat: z.coerce.number({ invalid_type_error: "lat must be a number" }),
   lng: z.coerce.number({ invalid_type_error: "lng must be a number" }),
   addressText: z.string().optional(),
+  landmark: z.string().optional(),
   wardId: z.string().uuid().optional(),
 });
 
@@ -80,7 +81,7 @@ issuesRouter.post(
       return;
     }
 
-    const { description, title, lat, lng, addressText, wardId } = parsed.data;
+    const { description, title, lat, lng, addressText, landmark, wardId } = parsed.data;
 
     let finalWardId = wardId || null;
     if (!finalWardId) {
@@ -97,6 +98,7 @@ issuesRouter.post(
         lat,
         lng,
         addressText: addressText ?? null,
+        landmark: landmark ?? null,
         wardId: finalWardId,
         status: "reported",
       })
@@ -334,6 +336,7 @@ issuesRouter.get("/:id", async (req, res) => {
           id: true,
           name: true,
           email: true,
+          phone: true,
           role: true,
           avatarUrl: true,
         },

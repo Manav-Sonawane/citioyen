@@ -1,6 +1,6 @@
 import { ilike } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { wards } from "../db/schema/wards.js";
+import { wards, ward_aliases } from "../db/schema/wards.js";
 
 export async function matchWard(geocodeResult: any): Promise<string | null> {
   if (!geocodeResult || !geocodeResult.address_components) return null;
@@ -19,6 +19,15 @@ export async function matchWard(geocodeResult: any): Promise<string | null> {
 
       if (matched) {
         return matched.id;
+      }
+
+      const aliasMatched = await db.query.ward_aliases.findFirst({
+        where: ilike(ward_aliases.areaName, `%${name}%`),
+        columns: { wardId: true },
+      });
+
+      if (aliasMatched) {
+        return aliasMatched.wardId;
       }
     }
   }

@@ -17,6 +17,7 @@ export const issues = pgTable("issues", {
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
   addressText: text("address_text"),
+  landmark: text("landmark"),
   slaDeadline: timestamp("sla_deadline"),
   assignedTo: uuid("assigned_to").references(() => users.id), // Nullable (assigned worker)
   duplicateOf: uuid("duplicate_of"), // Plain UUID column as requested

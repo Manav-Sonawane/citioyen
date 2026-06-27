@@ -8,6 +8,27 @@
       "when": 1782211253839,
       "tag": "0000_cynical_doctor_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782567762400,
+      "tag": "0001_lethal_exodus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782567795535,
+      "tag": "0002_serious_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782573027330,
+      "tag": "0003_old_kylun",
+      "breakpoints": true
     }
   ]
 }
