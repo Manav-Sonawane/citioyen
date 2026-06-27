@@ -1,10 +1,11 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { Map, AdvancedMarker, useMapsLibrary } from "@vis.gl/react-google-maps";
 
 interface LatLng { lat: number; lng: number }
 
 export interface MapLocationPickerProps {
   center: LatLng;
+  zoom?: number;
   markerPos?: LatLng | null;
   candidateMarkers?: { lat: number; lng: number; formattedAddress?: string }[];
   onLocationSelect: (lat: number, lng: number, address: string) => void;
@@ -39,8 +40,26 @@ export function useReverseGeocode() {
   return reverseGeocode;
 }
 
-export function MapLocationPicker({ center, markerPos, candidateMarkers, onLocationSelect }: MapLocationPickerProps) {
+export function MapLocationPicker({ center, zoom = 13, markerPos, candidateMarkers, onLocationSelect }: MapLocationPickerProps) {
   const reverseGeocode = useReverseGeocode();
+  
+  const [mapCenter, setMapCenter] = useState<LatLng>(center);
+  const [mapZoom, setMapZoom] = useState(zoom);
+
+  useEffect(() => {
+    if (candidateMarkers && candidateMarkers.length > 0) {
+      const sumLat = candidateMarkers.reduce((acc, c) => acc + c.lat, 0);
+      const sumLng = candidateMarkers.reduce((acc, c) => acc + c.lng, 0);
+      setMapCenter({
+        lat: sumLat / candidateMarkers.length,
+        lng: sumLng / candidateMarkers.length,
+      });
+      setMapZoom(14);
+    } else {
+      setMapCenter(center);
+      setMapZoom(zoom);
+    }
+  }, [center, zoom, candidateMarkers]);
 
   const handleMapClick = async (lat: number, lng: number) => {
     let address = "";
@@ -64,8 +83,10 @@ export function MapLocationPicker({ center, markerPos, candidateMarkers, onLocat
   return (
     <div style={{ height: 260, borderRadius: 8, overflow: "hidden", border: "1px solid #ccc" }}>
       <Map
-        defaultCenter={center}
-        defaultZoom={13}
+        center={mapCenter}
+        zoom={mapZoom}
+        onCenterChanged={(e) => setMapCenter(e.detail.center)}
+        onZoomChanged={(e) => setMapZoom(e.detail.zoom)}
         mapId="report-picker"
         style={{ width: "100%", height: "100%" }}
         gestureHandling="greedy"

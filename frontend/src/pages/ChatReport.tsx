@@ -12,6 +12,11 @@ type Message = {
   text: string;
 };
 
+interface LatLng {
+  lat: number;
+  lng: number;
+}
+
 type ExtractedData = {
   description: string;
   lat: number;
@@ -26,6 +31,7 @@ export function ChatReportInner() {
     { role: "model", text: "Hi! I'm here to help you report an issue. What did you find?" }
   ]);
   const [inputText, setInputText] = useState("");
+  const [attachedImage, setAttachedImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [pendingLocationPick, setPendingLocationPick] = useState<{
@@ -35,8 +41,20 @@ export function ChatReportInner() {
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [userLocation, setUserLocation] = useState<LatLng | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -107,6 +125,7 @@ export function ChatReportInner() {
     formData.append("lat", String(extractedData.lat));
     formData.append("lng", String(extractedData.lng));
     if (extractedData.addressText) formData.append("addressText", extractedData.addressText);
+    if (attachedImage) formData.append("media", attachedImage);
 
     try {
       await fetchApi("/issues", {
@@ -166,7 +185,8 @@ export function ChatReportInner() {
           <div style={{ padding: "0 10px" }}>
             <APIProvider apiKey={API_KEY}>
               <MapLocationPicker 
-                center={pendingLocationPick.candidates[0] || MUMBAI}
+                center={pendingLocationPick.candidates.length > 0 ? pendingLocationPick.candidates[0] : (userLocation || MUMBAI)}
+                zoom={pendingLocationPick.candidates.length > 0 ? 14 : (userLocation ? 16 : 13)}
                 candidateMarkers={pendingLocationPick.candidates}
                 onLocationSelect={handleMapSelection}
               />
@@ -197,22 +217,58 @@ export function ChatReportInner() {
       </div>
 
       <div style={s.inputArea}>
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Describe the issue..."
-          disabled={loading || !!extractedData || submitting}
-          style={s.textarea}
-          rows={2}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!inputText.trim() || loading || !!extractedData || submitting || !!pendingLocationPick}
-          style={s.sendBtn}
-        >
-          Send
-        </button>
+        {attachedImage && (
+          <div style={{ padding: "8px 16px", background: "#f8f9fa", borderBottom: "1px solid #eee", display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>Attached:</div>
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <img src={URL.createObjectURL(attachedImage)} alt="Preview" style={{ height: 40, width: 40, objectFit: "cover", borderRadius: 4 }} />
+              <button 
+                onClick={() => setAttachedImage(null)}
+                style={{ position: "absolute", top: -6, right: -6, background: "#d32f2f", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: "10px", padding: "16px 20px" }}>
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            onChange={(e) => {
+              if (e.target.files?.[0]) setAttachedImage(e.target.files[0]);
+              e.target.value = '';
+            }}
+            style={{ display: "none" }} 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading || !!extractedData || submitting || !!pendingLocationPick}
+            style={{
+              background: "none", border: "1px solid #ccc", borderRadius: 8, padding: "0 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 20
+            }}
+            title="Attach image"
+          >
+            📷
+          </button>
+          <textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe the issue..."
+            disabled={loading || !!extractedData || submitting}
+            style={{ ...s.textarea, flex: 1, margin: 0 }}
+            rows={2}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!inputText.trim() || loading || !!extractedData || submitting || !!pendingLocationPick}
+            style={s.sendBtn}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -291,13 +347,12 @@ const s: Record<string, React.CSSProperties> = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
   },
   inputArea: {
-    padding: "16px",
     borderTop: "1px solid #eee",
+    background: "#fff",
+    borderBottomLeftRadius: "10px",
+    borderBottomRightRadius: "10px",
     display: "flex",
-    gap: "10px",
-    alignItems: "flex-end",
-    backgroundColor: "#fff",
-    borderRadius: "0 0 10px 10px"
+    flexDirection: "column",
   },
   textarea: {
     flex: 1,
