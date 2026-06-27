@@ -103,3 +103,60 @@ statsRouter.get("/", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+statsRouter.get("/hotspots", async (req, res) => {
+  try {
+    const query = sql`
+      WITH current_period AS (
+        SELECT ward_id, category_id, count(id) as current_count
+        FROM issues
+        WHERE ward_id IS NOT NULL 
+          AND category_id IS NOT NULL
+          AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY ward_id, category_id
+      ),
+      previous_period AS (
+        SELECT ward_id, category_id, count(id) as previous_count
+        FROM issues
+        WHERE ward_id IS NOT NULL 
+          AND category_id IS NOT NULL
+          AND created_at >= NOW() - INTERVAL '60 days'
+          AND created_at < NOW() - INTERVAL '30 days'
+        GROUP BY ward_id, category_id
+      )
+      SELECT 
+        w.name as "wardName", 
+        c.name as "categoryName", 
+        COALESCE(cp.current_count, 0)::int as "currentCount", 
+        COALESCE(pp.previous_count, 0)::int as "previousCount"
+      FROM current_period cp
+      FULL OUTER JOIN previous_period pp ON cp.ward_id = pp.ward_id AND cp.category_id = pp.category_id
+      JOIN wards w ON w.id = COALESCE(cp.ward_id, pp.ward_id)
+      JOIN categories c ON c.id = COALESCE(cp.category_id, pp.category_id)
+      ORDER BY "currentCount" DESC
+      LIMIT 10
+    `;
+
+    const result = await db.execute(query);
+    const hotspots = result.rows.map((row: any) => {
+      const currentCount = row.currentCount;
+      const previousCount = row.previousCount;
+      let trend = "stable";
+      if (currentCount > previousCount) trend = "rising";
+      else if (currentCount < previousCount) trend = "falling";
+
+      return {
+        wardName: row.wardName,
+        categoryName: row.categoryName,
+        currentCount,
+        previousCount,
+        trend
+      };
+    });
+
+    res.json({ hotspots });
+  } catch (error) {
+    console.error("Error fetching hotspots:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});

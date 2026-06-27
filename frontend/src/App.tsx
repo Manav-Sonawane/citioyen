@@ -11,6 +11,7 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { FieldAgentDashboard } from "./pages/FieldAgentDashboard";
 import { PublicDashboard } from "./pages/PublicDashboard";
 import { Leaderboard } from "./pages/Leaderboard";
+import { Hotspots } from "./pages/Hotspots";
 import "./App.css";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<PublicDashboard />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/hotspots" element={<Hotspots />} />
         
         <Route path="/" element={<ProtectedRoute><HomeFeed /></ProtectedRoute>} />
         <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />

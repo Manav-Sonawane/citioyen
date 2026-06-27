@@ -102,6 +102,9 @@ export function Login() {
           <Link to="/leaderboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
             🏆 View Citizen Leaderboard
           </Link>
+          <Link to="/hotspots" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
+            🔥 View Issue Hotspots
+          </Link>
         </div>
       </div>
     </div>
