@@ -7,7 +7,7 @@ export const issueValidations = pgTable(
   "issue_validations",
   {
     issueId: uuid("issue_id")
-      .references(() => issues.id)
+      .references(() => issues.id, { onDelete: "cascade" })
       .notNull(),
     userId: uuid("user_id")
       .references(() => users.id)
