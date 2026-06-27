@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { fetchApi } from "../lib/api";
 import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 
 export function Login() {
   const { login } = useAuth();
@@ -30,6 +31,29 @@ export function Login() {
       }
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await fetchApi("/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ idToken: credentialResponse.credential }),
+      });
+      login(data.token, data.user);
+      if (data.user.role === "field_agent") {
+        navigate("/field-agent");
+      } else if (data.user.role === "admin" || data.user.role === "super_admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    } catch (err: any) {
+      setError(err.message || "Google sign-in failed");
     } finally {
       setLoading(false);
     }
@@ -89,6 +113,19 @@ export function Login() {
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
+
+        <div style={{ display: "flex", alignItems: "center", margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, backgroundColor: "var(--border)" }} />
+          <span style={{ margin: "0 10px", fontSize: 13, color: "var(--text-muted)" }}>OR</span>
+          <div style={{ flex: 1, height: 1, backgroundColor: "var(--border)" }} />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google sign-in failed")}
+          />
+        </div>
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 14, color: "var(--text-muted)" }}>
           Don't have an account?{" "}

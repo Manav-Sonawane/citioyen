@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { OAuth2Client } from "google-auth-library";
 import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db/db.js";
@@ -112,6 +113,73 @@ authRouter.post("/login", async (req, res) => {
 
   const { passwordHash: _, ...safeUser } = user;
   res.json({ user: safeUser, token });
+});
+
+// --- POST /auth/google ---
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+authRouter.post("/google", async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    res.status(400).json({ error: "idToken is required" });
+    return;
+  }
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      throw new Error("Invalid token payload");
+    }
+
+    const email = payload.email!.toLowerCase();
+    const name = payload.name || "Google User";
+    const avatarUrl = payload.picture;
+
+    // Check if user exists
+    let [user] = await db
+      .select()
+      .from(users)
+      .where(sql`lower(${users.email}) = lower(${email})`)
+      .limit(1);
+
+    if (!user) {
+      // Create new user
+      const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const passwordHash = await hashPassword(randomPassword);
+
+      [user] = await db
+        .insert(users)
+        .values({
+          name,
+          email,
+          passwordHash, // Unusable password
+          role: "citizen",
+          avatarUrl,
+        })
+        .returning();
+    } else if (!user.avatarUrl && avatarUrl) {
+      // Update avatar if they didn't have one
+      [user] = await db
+        .update(users)
+        .set({ avatarUrl })
+        .where(eq(users.id, user.id))
+        .returning();
+    }
+
+    const token = jwtSign({ userId: user.id, role: user.role });
+    res.cookie("token", token, COOKIE_OPTIONS);
+
+    const { passwordHash: _, ...safeUser } = user;
+    res.json({ user: safeUser, token });
+  } catch (err: any) {
+    console.error("Google auth error:", err);
+    res.status(401).json({ error: "Invalid Google token" });
+  }
 });
 
 // --- POST /logout ---
