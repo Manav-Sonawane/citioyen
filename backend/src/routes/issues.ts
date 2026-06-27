@@ -15,6 +15,7 @@ import {
 import { requireAuth } from "../middleware/index.js";
 import { uploadBuffer } from "../services/storage.js";
 import { categorizeIssue, embedText, verifyResolution } from "../services/gemini.js";
+import { reverseGeocodeAndMatchWard } from "../services/geocoding.js";
 import { checkAndEscalateSlaBreaches } from "../services/escalation.js";
 import type { AuthenticatedRequest } from "../types/index.js";
 import { jwtVerify } from "../lib/index.js";
@@ -54,6 +55,7 @@ const createIssueSchema = z.object({
   lat: z.coerce.number({ invalid_type_error: "lat must be a number" }),
   lng: z.coerce.number({ invalid_type_error: "lng must be a number" }),
   addressText: z.string().optional(),
+  wardId: z.string().uuid().optional(),
 });
 
 // --- Helper: determine media type from MIME ---
@@ -78,7 +80,12 @@ issuesRouter.post(
       return;
     }
 
-    const { description, title, lat, lng, addressText } = parsed.data;
+    const { description, title, lat, lng, addressText, wardId } = parsed.data;
+
+    let finalWardId = wardId || null;
+    if (!finalWardId) {
+      finalWardId = await reverseGeocodeAndMatchWard(lat, lng);
+    }
 
     // Create the issue
     const [issue] = await db
@@ -90,6 +97,7 @@ issuesRouter.post(
         lat,
         lng,
         addressText: addressText ?? null,
+        wardId: finalWardId,
         status: "reported",
       })
       .returning();

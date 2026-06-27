@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/index.js";
 import { extractReportFromChat } from "../services/gemini.js";
+import { matchWard } from "../services/geocoding.js";
 
 export const chatRouter = Router();
 
@@ -22,15 +23,24 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
   }
 
   try {
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      throw new Error("Missing Maps API Key");
+      throw new Error("GOOGLE_MAPS_API_KEY is not configured");
     }
 
     const query = encodeURIComponent(extraction.locationText || "");
     const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`;
+    
+    console.log("Geocoding API Request for chat report:");
+    console.log("  locationText:", extraction.locationText);
+
     const geoResponse = await fetch(geoUrl);
     const geoData = (await geoResponse.json()) as any;
+
+    console.log("  Response status:", geoData.status);
+    if (geoData.status === "OK" && geoData.results && geoData.results.length > 0) {
+      console.log("  address_components:", JSON.stringify(geoData.results[0].address_components, null, 2));
+    }
 
     console.log("Geocoding response for:", extraction.locationText, "status:", geoData.status, "results:", geoData.results?.length);
 
@@ -70,6 +80,8 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
     const lng = result.geometry.location.lng;
     const addressText = result.formatted_address;
 
+    const wardId = await matchWard(result);
+
     return res.json({
       readyToSubmit: true,
       extracted: {
@@ -77,7 +89,8 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
         lat,
         lng,
         addressText,
-        categoryHint: extraction.categoryHint
+        categoryHint: extraction.categoryHint,
+        wardId
       }
     });
 

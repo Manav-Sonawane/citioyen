@@ -23,6 +23,7 @@ type ExtractedData = {
   lng: number;
   addressText: string;
   categoryHint: string | null;
+  wardId?: string | null;
 };
 
 export function ChatReportInner() {
@@ -125,6 +126,7 @@ export function ChatReportInner() {
     formData.append("lat", String(extractedData.lat));
     formData.append("lng", String(extractedData.lng));
     if (extractedData.addressText) formData.append("addressText", extractedData.addressText);
+    if (extractedData.wardId) formData.append("wardId", extractedData.wardId);
     if (attachedImage) formData.append("media", attachedImage);
 
     try {
