@@ -18,12 +18,15 @@ interface LatLng {
 }
 
 type ExtractedData = {
+  title: string | null;
   description: string;
   lat: number;
   lng: number;
   addressText: string;
   categoryHint: string | null;
   wardId?: string | null;
+  landmark?: string | null;
+  area?: string | null;
 };
 
 export function ChatReportInner() {
@@ -37,8 +40,11 @@ export function ChatReportInner() {
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [pendingLocationPick, setPendingLocationPick] = useState<{
     candidates: {lat: number, lng: number, formattedAddress: string}[];
+    title: string | null;
     description: string;
     categoryHint: string | null;
+    landmark?: string | null;
+    area?: string | null;
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -83,8 +89,11 @@ export function ChatReportInner() {
         setHistory([...newHistory, { role: "model", text: res.botMessage }]);
         setPendingLocationPick({
           candidates: res.locationCandidates,
+          title: res.extracted.title,
           description: res.extracted.description,
-          categoryHint: res.extracted.categoryHint
+          categoryHint: res.extracted.categoryHint,
+          landmark: res.extracted.landmark,
+          area: res.extracted.area
         });
       } else {
         setHistory([...newHistory, { role: "model", text: res.botMessage || res.followUpQuestion }]);
@@ -102,11 +111,14 @@ export function ChatReportInner() {
     setPendingLocationPick(null);
     setHistory([...history, { role: "model", text: `Got it. Location set to: ${address}` }]);
     setExtractedData({
+      title: pendingLocationPick.title,
       description: pendingLocationPick.description,
       categoryHint: pendingLocationPick.categoryHint,
       lat,
       lng,
-      addressText: address
+      addressText: address,
+      landmark: pendingLocationPick.landmark,
+      area: pendingLocationPick.area
     });
   };
 
@@ -122,6 +134,7 @@ export function ChatReportInner() {
     setSubmitting(true);
 
     const formData = new FormData();
+    if (extractedData.title) formData.append("title", extractedData.title);
     formData.append("description", extractedData.description);
     formData.append("lat", String(extractedData.lat));
     formData.append("lng", String(extractedData.lng));
@@ -200,8 +213,11 @@ export function ChatReportInner() {
           <div style={s.summaryCard}>
             <h3 style={{ marginTop: 0, fontSize: "16px", marginBottom: "12px", color: "#1565c0" }}>Ready to submit?</h3>
             <div style={{ fontSize: "14px", lineHeight: "1.5", color: "#333" }}>
+              {extractedData.title && <><strong>Title:</strong> {extractedData.title}<br/></>}
               <strong>Description:</strong> {extractedData.description}<br/>
               <strong>Location:</strong> {extractedData.addressText || `${extractedData.lat.toFixed(4)}, ${extractedData.lng.toFixed(4)}`}<br/>
+              {extractedData.landmark && <><strong>Landmark:</strong> {extractedData.landmark}<br/></>}
+              {extractedData.area && <><strong>Area:</strong> {extractedData.area}<br/></>}
               {extractedData.categoryHint && <><strong style={{ textTransform: "capitalize" }}>Category guess:</strong> {extractedData.categoryHint}<br/></>}
             </div>
             <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>

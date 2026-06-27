@@ -28,11 +28,11 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
       throw new Error("GOOGLE_MAPS_API_KEY is not configured");
     }
 
-    const query = encodeURIComponent(extraction.locationText || "");
+    const query = encodeURIComponent(extraction.location?.normalizedAddressQuery || "");
     const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`;
     
     console.log("Geocoding API Request for chat report:");
-    console.log("  locationText:", extraction.locationText);
+    console.log("  normalizedAddressQuery:", extraction.location?.normalizedAddressQuery);
 
     const geoResponse = await fetch(geoUrl);
     const geoData = (await geoResponse.json()) as any;
@@ -42,7 +42,7 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
       console.log("  address_components:", JSON.stringify(geoData.results[0].address_components, null, 2));
     }
 
-    console.log("Geocoding response for:", extraction.locationText, "status:", geoData.status, "results:", geoData.results?.length);
+    console.log("Geocoding response for:", extraction.location?.normalizedAddressQuery, "status:", geoData.status, "results:", geoData.results?.length);
 
     if (geoData.status === "OK" && geoData.results && geoData.results.length > 1) {
       const candidates = geoData.results.slice(0, 5).map((r: any) => ({
@@ -56,8 +56,11 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
         locationCandidates: candidates,
         botMessage: "I found a few places matching that — please tap the correct one on the map below",
         extracted: {
+          title: extraction.title,
           description: extraction.description,
-          categoryHint: extraction.categoryHint
+          categoryHint: extraction.categoryHint,
+          landmark: extraction.location?.landmark || null,
+          area: extraction.location?.area || null
         }
       });
     }
@@ -69,8 +72,11 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
         locationCandidates: [],
         botMessage: "I couldn't find an exact match for that — please tap the location on the map below.",
         extracted: {
+          title: extraction.title,
           description: extraction.description,
-          categoryHint: extraction.categoryHint
+          categoryHint: extraction.categoryHint,
+          landmark: extraction.location?.landmark || null,
+          area: extraction.location?.area || null
         }
       });
     }
@@ -85,12 +91,15 @@ chatRouter.post("/report", requireAuth, async (req, res) => {
     return res.json({
       readyToSubmit: true,
       extracted: {
+        title: extraction.title,
         description: extraction.description,
         lat,
         lng,
         addressText,
         categoryHint: extraction.categoryHint,
-        wardId
+        wardId,
+        landmark: extraction.location?.landmark || null,
+        area: extraction.location?.area || null
       }
     });
 

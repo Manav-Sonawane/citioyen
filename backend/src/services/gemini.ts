@@ -158,15 +158,22 @@ Be strict but reasonable. If the after-photo clearly shows the location is clean
 export async function extractReportFromChat(
   conversationHistory: { role: "user" | "model"; text: string }[]
 ): Promise<{
+  title: string | null;
   description: string | null;
-  locationText: string | null;
+  location: {
+    landmark: string | null;
+    area: string | null;
+    city: string;
+    normalizedAddressQuery: string;
+  } | null;
   categoryHint: string | null;
   readyToSubmit: boolean;
   followUpQuestion: string | null;
 }> {
   const fallback = {
+    title: null,
     description: null,
-    locationText: null,
+    location: null,
     categoryHint: null,
     readyToSubmit: false,
     followUpQuestion: "Sorry, I had trouble understanding that — could you describe the issue again?",
@@ -177,11 +184,16 @@ export async function extractReportFromChat(
 
     const systemInstruction = `You are a civic issue reporting assistant. Analyze the conversation history and extract the current state of the report.
 Rules:
-1. Extract 'description' and 'locationText' from the user's messages if provided.
-2. Guess 'categoryHint' if possible (e.g. pothole, streetlight, garbage, etc.) or set to null.
-3. 'readyToSubmit' must be true ONLY if both 'description' and 'locationText' are present AND 'description' is detailed enough (at least 10 characters).
-4. If 'readyToSubmit' is false, 'followUpQuestion' MUST contain a natural, specific question asking the user for the missing information.
-5. If 'readyToSubmit' is true, 'followUpQuestion' should be null.`;
+1. Extract 'title' (a short 5-8 word descriptive title) and 'description'.
+2. Extract 'location' if provided by the user. Construct a structured location object:
+   - 'landmark': any specific nearby landmark mentioned (or null).
+   - 'area': the neighborhood or area (or null).
+   - 'city': the city (infer from context or default to "Mumbai").
+   - 'normalizedAddressQuery': compose a clean, geocoder-friendly address string from whatever the user mentioned (e.g., if user says "near Andheri station", output "Andheri Station, Andheri West, Mumbai, Maharashtra, India").
+3. Guess 'categoryHint' if possible (e.g. pothole, streetlight, garbage, etc.) or set to null.
+4. 'readyToSubmit' must be true ONLY if both 'description' and 'location' (specifically normalizedAddressQuery) are present AND 'description' is detailed enough (at least 10 characters).
+5. If 'readyToSubmit' is false, 'followUpQuestion' MUST contain a natural, specific question asking the user for the missing information.
+6. If 'readyToSubmit' is true, 'followUpQuestion' should be null.`;
 
     const contents = conversationHistory.map(msg => ({
       role: msg.role,
@@ -197,8 +209,19 @@ Rules:
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            title: { type: Type.STRING, nullable: true },
             description: { type: Type.STRING, nullable: true },
-            locationText: { type: Type.STRING, nullable: true },
+            location: {
+              type: Type.OBJECT,
+              nullable: true,
+              properties: {
+                landmark: { type: Type.STRING, nullable: true },
+                area: { type: Type.STRING, nullable: true },
+                city: { type: Type.STRING },
+                normalizedAddressQuery: { type: Type.STRING }
+              },
+              required: ["city", "normalizedAddressQuery"]
+            },
             categoryHint: { type: Type.STRING, nullable: true },
             readyToSubmit: { type: Type.BOOLEAN },
             followUpQuestion: { type: Type.STRING, nullable: true }
@@ -212,8 +235,9 @@ Rules:
     if (!text) return fallback;
     const parsed = JSON.parse(text);
     return {
+      title: parsed.title || null,
       description: parsed.description || null,
-      locationText: parsed.locationText || null,
+      location: parsed.location || null,
       categoryHint: parsed.categoryHint || null,
       readyToSubmit: !!parsed.readyToSubmit,
       followUpQuestion: parsed.followUpQuestion || null
