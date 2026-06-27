@@ -117,7 +117,7 @@ authRouter.post("/login", async (req, res) => {
 
 // --- POST /auth/google ---
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(process.env.GOOGLE_OAUTH_CLIENT_ID);
 
 authRouter.post("/google", async (req, res) => {
   const { idToken } = req.body;
@@ -129,7 +129,7 @@ authRouter.post("/google", async (req, res) => {
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: process.env.GOOGLE_OAUTH_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     if (!payload) {

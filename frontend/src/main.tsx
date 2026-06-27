@@ -6,7 +6,7 @@ import { AuthProvider } from "./lib/auth";
 import App from "./App.tsx";
 import "./index.css";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID as string;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
