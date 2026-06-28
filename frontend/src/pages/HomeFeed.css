@@ -1,0 +1,150 @@
+/* =====================================================
+   HomeFeed — Stats strip + two-column split layout
+   ===================================================== */
+
+.home {
+  min-height: calc(100vh - var(--navbar-height));
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Stats strip ── */
+
+.home__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: var(--space-md) var(--space-lg);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Two-column split ── */
+
+.home__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 0; /* allow children to shrink in flex context */
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+/* ── Feed (left column) ── */
+
+.home__feed {
+  overflow-y: auto;
+  max-height: calc(100vh - var(--navbar-height) - 140px);
+  padding-right: var(--space-md);
+}
+
+.home__feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: var(--space-sm) 0;
+  z-index: 2;
+}
+
+.home__feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 80px; /* space for FABs */
+}
+
+/* ── Map (right column) ── */
+
+.home__map {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  padding-left: var(--space-md);
+}
+
+.home__map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: var(--space-sm) 0;
+}
+
+.home__map-container {
+  flex: 1;
+  min-height: 400px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Floating Action Buttons ── */
+
+.home__fabs {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+
+@media (max-width: 900px) {
+  .home__stats {
+    grid-template-columns: repeat(2, 1fr);
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .home__split {
+    grid-template-columns: 1fr;
+    padding: 0 var(--space-md) var(--space-md);
+  }
+
+  .home__feed {
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .home__map {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    padding-left: 0;
+    padding-top: var(--space-md);
+    margin-top: var(--space-md);
+  }
+
+  .home__map-container {
+    min-height: 300px;
+    height: 50vh;
+  }
+
+  .home__feed-list {
+    padding-bottom: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .home__stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .home__fabs {
+    bottom: 16px;
+    gap: 8px;
+  }
+}
