@@ -1,0 +1,12 @@
+node_modules
+.git
+*.log
+
+backend
+
+# Frontend local-only files
+frontend/node_modules
+frontend/dist
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
