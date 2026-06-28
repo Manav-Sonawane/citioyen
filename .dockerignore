@@ -1,0 +1,12 @@
+node_modules
+frontend
+.git
+*.log
+
+# Backend local-only files
+backend/node_modules
+backend/dist
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/gcs-service-account.json
