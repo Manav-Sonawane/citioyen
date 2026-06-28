@@ -30,4 +30,4 @@ ENV PORT=8080
 EXPOSE ${PORT}
 
 # Serve the static files as a Single Page Application (-s routes all 404s to index.html)
-CMD serve -s dist -l ${PORT}
+CMD ["serve", "-s", "dist", "-l", "8080"]
