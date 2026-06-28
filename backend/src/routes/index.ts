@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db } from "../db/db.js";
-import { users } from "../db/schema/index.js";
+import { users, issues, issueValidations } from "../db/schema/index.js";
 import { authRouter } from "./auth.js";
 import { issuesRouter } from "./issues.js";
 import { statsRouter } from "./stats.js";
 import { chatRouter } from "./chat.js";
 import { requireAuth } from "../middleware/index.js";
+import type { AuthenticatedRequest } from "../types/index.js";
 
 export const router = Router();
 
@@ -37,6 +38,78 @@ router.get("/users/leaderboard", async (req, res) => {
     .orderBy(desc(users.reputationScore))
     .limit(20);
   res.json({ leaderboard: topUsers });
+});
+
+// --- GET /users/me/issues — Profile data: reported, assigned, validated issues ---
+
+router.get("/users/me/issues", requireAuth, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const userId = authReq.userId!;
+
+  // Fetch user profile
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      reputationScore: users.reputationScore,
+      avatarUrl: users.avatarUrl,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  // Run all three queries in parallel
+  const [reported, assigned, validatedRows] = await Promise.all([
+    // 1. Issues reported by this user
+    db
+      .select({
+        id: issues.id,
+        title: issues.title,
+        status: issues.status,
+        createdAt: issues.createdAt,
+      })
+      .from(issues)
+      .where(eq(issues.reporterId, userId))
+      .orderBy(desc(issues.createdAt)),
+
+    // 2. Issues assigned to this user (only meaningful for field agents)
+    user.role === "field_agent"
+      ? db
+          .select({
+            id: issues.id,
+            title: issues.title,
+            status: issues.status,
+            createdAt: issues.createdAt,
+          })
+          .from(issues)
+          .where(eq(issues.assignedTo, userId))
+          .orderBy(desc(issues.createdAt))
+      : Promise.resolve([]),
+
+    // 3. Issues this user has validated, with their vote type
+    db
+      .select({
+        id: issues.id,
+        title: issues.title,
+        status: issues.status,
+        createdAt: issues.createdAt,
+        voteType: issueValidations.voteType,
+      })
+      .from(issueValidations)
+      .innerJoin(issues, eq(issueValidations.issueId, issues.id))
+      .where(eq(issueValidations.userId, userId))
+      .orderBy(desc(issues.createdAt)),
+  ]);
+
+  res.json({ user, reported, assigned, validated: validatedRows });
 });
 
 router.get("/users", requireAuth, async (req, res) => {

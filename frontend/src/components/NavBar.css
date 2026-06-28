@@ -1,0 +1,212 @@
+/* ── NavBar ── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--navbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Left: brand ── */
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.navbar__logo {
+  font-weight: 800;
+  font-size: 19px;
+  color: var(--primary);
+  letter-spacing: -0.5px;
+}
+
+/* ── Center: nav links ── */
+.navbar__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.navbar__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+
+.navbar__link:hover {
+  color: var(--primary);
+  background: var(--primary-light);
+  text-decoration: none;
+}
+
+.navbar__link--active {
+  color: var(--primary);
+}
+
+.navbar__link--active::after {
+  content: "";
+  position: absolute;
+  bottom: -13px;          /* aligns with the bottom border of the navbar */
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+}
+
+/* ── Right: auth actions ── */
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.navbar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.navbar__user:hover {
+  background: var(--primary-light);
+  text-decoration: none;
+}
+
+.navbar__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-light);
+}
+
+.navbar__avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.navbar__divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 var(--space-xs);
+}
+
+.navbar__role-link {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.navbar__role-link--admin {
+  color: var(--warning);
+  background: var(--warning-light);
+}
+
+.navbar__role-link--admin:hover {
+  background: #FFE0B2;
+  text-decoration: none;
+}
+
+.navbar__role-link--field {
+  color: var(--success);
+  background: var(--success-light);
+}
+
+.navbar__role-link--field:hover {
+  background: #C8E6C9;
+  text-decoration: none;
+}
+
+.navbar__logout {
+  border: none;
+  background: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+  font-family: var(--sans);
+}
+
+.navbar__logout:hover {
+  background: var(--danger-light);
+}
+
+/* ── Auth buttons (logged out) ── */
+.navbar__auth-btn {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navbar__auth-btn--login {
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.navbar__auth-btn--login:hover {
+  background: #BBDEFB;
+  text-decoration: none;
+}
+
+.navbar__auth-btn--signup {
+  color: #fff;
+  background: var(--primary);
+}
+
+.navbar__auth-btn--signup:hover {
+  background: var(--primary-hover);
+  text-decoration: none;
+}
+
+/* ── Responsive: collapse center links on very small screens ── */
+@media (max-width: 720px) {
+  .navbar__links {
+    display: none;
+  }
+}

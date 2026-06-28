@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { fetchApi } from "../lib/api";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import { MapLocationPicker } from "../components/MapLocationPicker";
+import { PageContainer, Card, Button } from "../components/ui";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 const MUMBAI = { lat: 19.076, lng: 72.8777 };
@@ -163,133 +164,137 @@ export function ChatReportInner() {
 
   if (success) {
     return (
-      <div style={s.container}>
-        <div style={{ textAlign: "center", padding: "40px 20px" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-          <h2 style={{ color: "var(--text-heading)", margin: 0 }}>Your report was submitted successfully</h2>
-          <p style={{ color: "var(--text-muted)", marginTop: 8 }}>Thank you for keeping the community safe!</p>
-          <button onClick={() => navigate("/")} style={{ ...s.primaryBtn, marginTop: 32 }}>
-            Back to Home
-          </button>
-        </div>
-      </div>
+      <PageContainer narrow>
+        <Card>
+          <div style={{ textAlign: "center", padding: "40px 20px" }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+            <h2 style={{ color: "var(--text-heading)", margin: 0 }}>Your report was submitted successfully</h2>
+            <p style={{ color: "var(--text-muted)", marginTop: 8 }}>Thank you for keeping the community safe!</p>
+            <Button variant="primary" size="lg" onClick={() => navigate("/")} style={{ marginTop: 32 }}>
+              Back to Home
+            </Button>
+          </div>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <div style={s.container}>
-      <div style={s.header}>
-        <h1 style={{ margin: 0, fontSize: "20px" }}>Report via Chat</h1>
-        <Link to="/" style={{ fontSize: "14px", color: "var(--primary)", textDecoration: "none" }}>Cancel</Link>
-      </div>
-
-      <div style={s.chatBox}>
-        {history.map((msg, i) => (
-          <div key={i} style={msg.role === "user" ? s.userRow : s.modelRow}>
-            <div style={msg.role === "user" ? s.userMsg : s.modelMsg}>
-              {msg.text}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div style={s.modelRow}>
-            <div style={{ ...s.modelMsg, color: "#888", fontStyle: "italic" }}>Typing...</div>
-          </div>
-        )}
-
-        {pendingLocationPick && (
-          <div style={{ padding: "0 10px" }}>
-            <APIProvider apiKey={API_KEY}>
-              <MapLocationPicker 
-                center={pendingLocationPick.candidates.length > 0 ? pendingLocationPick.candidates[0] : (userLocation || MUMBAI)}
-                zoom={pendingLocationPick.candidates.length > 0 ? 14 : (userLocation ? 16 : 13)}
-                candidateMarkers={pendingLocationPick.candidates}
-                onLocationSelect={handleMapSelection}
-              />
-            </APIProvider>
-          </div>
-        )}
-        
-        {extractedData && (
-          <div style={s.summaryCard}>
-            <h3 style={{ marginTop: 0, fontSize: "16px", marginBottom: "12px", color: "#1565c0" }}>Ready to submit?</h3>
-            <div style={{ fontSize: "14px", lineHeight: "1.5", color: "#333" }}>
-              {extractedData.title && <><strong>Title:</strong> {extractedData.title}<br/></>}
-              <strong>Description:</strong> {extractedData.description}<br/>
-              <strong>Location:</strong> {extractedData.addressText || `${extractedData.lat.toFixed(4)}, ${extractedData.lng.toFixed(4)}`}<br/>
-              {extractedData.landmark && <><strong>Landmark:</strong> {extractedData.landmark}<br/></>}
-              {extractedData.area && <><strong>Area:</strong> {extractedData.area}<br/></>}
-              {extractedData.categoryHint && <><strong style={{ textTransform: "capitalize" }}>Category guess:</strong> {extractedData.categoryHint}<br/></>}
-            </div>
-            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
-              <button onClick={handleSubmitIssue} disabled={submitting} style={s.primaryBtn}>
-                {submitting ? "Submitting..." : "Confirm & Submit"}
-              </button>
-              <button onClick={handleKeepEditing} disabled={submitting} style={s.secondaryBtn}>
-                Keep editing
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div ref={bottomRef} />
-      </div>
-
-      <div style={s.inputArea}>
-        {attachedImage && (
-          <div style={{ padding: "8px 16px", background: "#f8f9fa", borderBottom: "1px solid #eee", display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>Attached:</div>
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <img src={URL.createObjectURL(attachedImage)} alt="Preview" style={{ height: 40, width: 40, objectFit: "cover", borderRadius: 4 }} />
-              <button 
-                onClick={() => setAttachedImage(null)}
-                style={{ position: "absolute", top: -6, right: -6, background: "#d32f2f", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-        <div style={{ display: "flex", gap: "10px", padding: "16px 20px" }}>
-          <input 
-            type="file" 
-            accept="image/*" 
-            ref={fileInputRef} 
-            onChange={(e) => {
-              if (e.target.files?.[0]) setAttachedImage(e.target.files[0]);
-              e.target.value = '';
-            }}
-            style={{ display: "none" }} 
-          />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading || !!extractedData || submitting || !!pendingLocationPick}
-            style={{
-              background: "none", border: "1px solid #ccc", borderRadius: 8, padding: "0 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 20
-            }}
-            title="Attach image"
-          >
-            📷
-          </button>
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Describe the issue..."
-            disabled={loading || !!extractedData || submitting}
-            style={{ ...s.textarea, flex: 1, margin: 0 }}
-            rows={2}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!inputText.trim() || loading || !!extractedData || submitting || !!pendingLocationPick}
-            style={s.sendBtn}
-          >
-            Send
-          </button>
+    <PageContainer narrow>
+      <Card style={{ padding: 0, display: "flex", flexDirection: "column", height: "calc(100vh - var(--navbar-height) - 96px)", minHeight: "400px" }}>
+        <div style={s.header}>
+          <h1 style={{ margin: 0, fontSize: "20px" }}>Report via Chat</h1>
+          <Link to="/" style={{ fontSize: "14px", color: "var(--primary)", textDecoration: "none" }}>Cancel</Link>
         </div>
-      </div>
-    </div>
+
+        <div style={s.chatBox}>
+          {history.map((msg, i) => (
+            <div key={i} style={msg.role === "user" ? s.userRow : s.modelRow}>
+              <div style={msg.role === "user" ? s.userMsg : s.modelMsg}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div style={s.modelRow}>
+              <div style={{ ...s.modelMsg, color: "var(--text-muted)", fontStyle: "italic" }}>Typing...</div>
+            </div>
+          )}
+
+          {pendingLocationPick && (
+            <div style={{ padding: "0 10px" }}>
+              <APIProvider apiKey={API_KEY}>
+                <MapLocationPicker 
+                  center={pendingLocationPick.candidates.length > 0 ? pendingLocationPick.candidates[0] : (userLocation || MUMBAI)}
+                  zoom={pendingLocationPick.candidates.length > 0 ? 14 : (userLocation ? 16 : 13)}
+                  candidateMarkers={pendingLocationPick.candidates}
+                  onLocationSelect={handleMapSelection}
+                />
+              </APIProvider>
+            </div>
+          )}
+          
+          {extractedData && (
+            <Card style={{ margin: "8px 0", borderColor: "var(--primary-light)" }}>
+              <h3 style={{ marginTop: 0, fontSize: "16px", marginBottom: "12px", color: "var(--primary)" }}>Ready to submit?</h3>
+              <div style={{ fontSize: "14px", lineHeight: "1.5", color: "var(--text)" }}>
+                {extractedData.title && <><strong>Title:</strong> {extractedData.title}<br/></>}
+                <strong>Description:</strong> {extractedData.description}<br/>
+                <strong>Location:</strong> {extractedData.addressText || `${extractedData.lat.toFixed(4)}, ${extractedData.lng.toFixed(4)}`}<br/>
+                {extractedData.landmark && <><strong>Landmark:</strong> {extractedData.landmark}<br/></>}
+                {extractedData.area && <><strong>Area:</strong> {extractedData.area}<br/></>}
+                {extractedData.categoryHint && <><strong style={{ textTransform: "capitalize" }}>Category guess:</strong> {extractedData.categoryHint}<br/></>}
+              </div>
+              <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+                <Button variant="primary" onClick={handleSubmitIssue} disabled={submitting} style={{ flex: 1 }}>
+                  {submitting ? "Submitting..." : "Confirm & Submit"}
+                </Button>
+                <Button variant="secondary" onClick={handleKeepEditing} disabled={submitting} style={{ flex: 1 }}>
+                  Keep editing
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+
+        <div style={s.inputArea}>
+          {attachedImage && (
+            <div style={{ padding: "8px 16px", background: "var(--bg)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>Attached:</div>
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <img src={URL.createObjectURL(attachedImage)} alt="Preview" style={{ height: 40, width: 40, objectFit: "cover", borderRadius: 4 }} />
+                <button 
+                  onClick={() => setAttachedImage(null)}
+                  style={{ position: "absolute", top: -6, right: -6, background: "var(--danger)", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: "10px", padding: "var(--space-md) var(--space-lg)" }}>
+            <input 
+              type="file" 
+              accept="image/*" 
+              ref={fileInputRef} 
+              onChange={(e) => {
+                if (e.target.files?.[0]) setAttachedImage(e.target.files[0]);
+                e.target.value = '';
+              }}
+              style={{ display: "none" }} 
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading || !!extractedData || submitting || !!pendingLocationPick}
+              style={{
+                background: "none", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "0 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 20
+              }}
+              title="Attach image"
+            >
+              📷
+            </button>
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Describe the issue..."
+              disabled={loading || !!extractedData || submitting}
+              style={{ ...s.textarea, flex: 1, margin: 0 }}
+              rows={2}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!inputText.trim() || loading || !!extractedData || submitting || !!pendingLocationPick}
+              style={s.sendBtn}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </Card>
+    </PageContainer>
   );
 }
 
@@ -302,34 +307,21 @@ export function ChatReport() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  container: {
-    maxWidth: "600px",
-    margin: "40px auto",
-    background: "#FFFFFF",
-    border: "1px solid #D0D7E3",
-    borderRadius: "10px",
-    fontFamily: "var(--sans, sans-serif)",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-    display: "flex",
-    flexDirection: "column",
-    height: "calc(100vh - 140px)",
-    minHeight: "400px"
-  },
   header: {
-    padding: "16px 20px",
-    borderBottom: "1px solid #eee",
+    padding: "var(--space-md) var(--space-lg)",
+    borderBottom: "1px solid var(--border)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center"
   },
   chatBox: {
     flex: 1,
-    padding: "20px",
+    padding: "var(--space-lg)",
     overflowY: "auto",
     display: "flex",
     flexDirection: "column",
     gap: "12px",
-    backgroundColor: "#f9fafc"
+    backgroundColor: "var(--bg)"
   },
   userRow: {
     display: "flex",
@@ -342,74 +334,46 @@ const s: Record<string, React.CSSProperties> = {
   userMsg: {
     backgroundColor: "var(--primary)",
     color: "#fff",
-    padding: "10px 14px",
-    borderRadius: "16px 16px 0px 16px",
+    padding: "var(--space-sm) var(--space-md)",
+    borderRadius: "var(--radius-lg) var(--radius-lg) 0px var(--radius-lg)",
     maxWidth: "80%",
     fontSize: "14px",
     lineHeight: "1.4"
   },
   modelMsg: {
-    backgroundColor: "#e2e8f0",
-    color: "#1e293b",
-    padding: "10px 14px",
-    borderRadius: "16px 16px 16px 0px",
+    backgroundColor: "var(--border)",
+    color: "var(--text-heading)",
+    padding: "var(--space-sm) var(--space-md)",
+    borderRadius: "var(--radius-lg) var(--radius-lg) var(--radius-lg) 0px",
     maxWidth: "80%",
     fontSize: "14px",
     lineHeight: "1.4"
   },
-  summaryCard: {
-    backgroundColor: "#fff",
-    border: "1px solid #bfdbfe",
-    borderRadius: "8px",
-    padding: "16px",
-    marginTop: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
-  },
   inputArea: {
-    borderTop: "1px solid #eee",
-    background: "#fff",
-    borderBottomLeftRadius: "10px",
-    borderBottomRightRadius: "10px",
+    borderTop: "1px solid var(--border)",
+    background: "var(--surface)",
+    borderBottomLeftRadius: "var(--radius-md)",
+    borderBottomRightRadius: "var(--radius-md)",
     display: "flex",
     flexDirection: "column",
   },
   textarea: {
     flex: 1,
-    padding: "10px 12px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
+    padding: "var(--space-sm) var(--space-md)",
+    borderRadius: "var(--radius-md)",
+    border: "1px solid var(--border)",
     resize: "none",
     fontFamily: "inherit",
     fontSize: "14px"
   },
   sendBtn: {
-    padding: "10px 20px",
+    padding: "var(--space-sm) var(--space-lg)",
     backgroundColor: "var(--primary)",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-md)",
     fontWeight: "bold",
     cursor: "pointer",
     height: "100%"
   },
-  primaryBtn: {
-    flex: 1,
-    padding: "10px",
-    backgroundColor: "var(--primary)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
-  secondaryBtn: {
-    flex: 1,
-    padding: "10px",
-    backgroundColor: "#fff",
-    color: "var(--primary)",
-    border: "1px solid var(--primary)",
-    borderRadius: "6px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  }
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../lib/auth";
 import { fetchApi } from "../lib/api";
 import { Link, Navigate } from "react-router-dom";
+import { PageContainer, Card, Badge, LoadingSpinner, EmptyState } from "../components/ui";
 
 interface User {
   id: string;
@@ -33,9 +34,9 @@ function DuplicateBadge({ duplicates }: { duplicates?: { id: string; description
       <button 
         onClick={() => setExpanded(!expanded)}
         style={{
-          background: "#FFFAF0",
+          background: "var(--warning-light)",
           border: "1px solid #FBD38D",
-          color: "#DD6B20",
+          color: "var(--warning)",
           padding: "4px 8px",
           borderRadius: 4,
           fontSize: 11,
@@ -108,8 +109,8 @@ function ResolveButton({ issueId, onResolved }: { issueId: string; onResolved: (
         disabled={loading}
         onClick={() => fileInputRef.current?.click()}
         style={{
-          background: "#E8F5E9",
-          color: "#2E7D32",
+          background: "var(--success-light)",
+          color: "var(--success)",
           border: "1px solid #C8E6C9",
           padding: "4px 8px",
           borderRadius: 4,
@@ -156,8 +157,8 @@ function OverrideButton({ issueId, onResolved }: { issueId: string; onResolved: 
       disabled={loading}
       onClick={handleOverride}
       style={{
-        background: "#FFF3E0",
-        color: "#E65100",
+        background: "var(--warning-light)",
+        color: "var(--warning)",
         border: "1px solid #FFE0B2",
         padding: "4px 8px",
         borderRadius: 4,
@@ -237,17 +238,22 @@ export function AdminDashboard() {
   };
 
   return (
-    <div style={{ background: "var(--bg)", minHeight: "100svh", padding: 24, fontFamily: "var(--sans)" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", background: "var(--surface)", padding: 24, borderRadius: 8, boxShadow: "var(--shadow-sm)" }}>
+    <PageContainer>
+      <Card style={{ padding: "var(--space-lg)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text-heading)" }}>Admin Dashboard</h1>
-          <Link to="/" style={{ color: "var(--primary)", fontWeight: 600, textDecoration: "none" }}>← Back to Feed</Link>
         </div>
 
         {error && <div className="alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
         {loading ? (
-          <p style={{ color: "var(--text-muted)" }}>Loading data...</p>
+          <LoadingSpinner message="Loading data…" />
+        ) : issues.length === 0 ? (
+          <EmptyState
+            icon="📂"
+            title="No issues found"
+            message="There are no reported issues to manage at this time."
+          />
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
@@ -277,17 +283,20 @@ export function AdminDashboard() {
                     <td style={{ padding: "12px 8px" }}>{issue.reporter?.name || "Unknown"}</td>
                     <td style={{ padding: "12px 8px" }}>{fmtDate(issue.createdAt)}</td>
                     <td style={{ padding: "12px 8px" }}>
-                      <select
-                        value={issue.status}
-                        onChange={(e) => handleUpdate(issue.id, e.target.value, issue.assignedTo)}
-                        style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid var(--border)" }}
-                      >
-                        {options.map(opt => (
-                          <option key={opt} value={opt}>
-                            {opt.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
-                          </option>
-                        ))}
-                      </select>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Badge status={issue.status} />
+                        <select
+                          value={issue.status}
+                          onChange={(e) => handleUpdate(issue.id, e.target.value, issue.assignedTo)}
+                          style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid var(--border)", fontSize: 12 }}
+                        >
+                          {options.map(opt => (
+                            <option key={opt} value={opt}>
+                              {opt.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </td>
                     <td style={{ padding: "12px 8px" }}>
                       <select
@@ -324,8 +333,8 @@ export function AdminDashboard() {
                             const resolutionImg = issue.media?.find(m => m.stage === "resolution" && m.mediaType === "image");
 
                             return (
-                              <div style={{ background: "#FFEBEE", padding: 8, borderRadius: 4, marginTop: 4, border: "1px solid #FFCDD2" }}>
-                                <div style={{ fontSize: 11, color: "#C62828", fontWeight: 600, marginBottom: 4 }}>
+                              <div style={{ background: "var(--danger-light)", padding: 8, borderRadius: 4, marginTop: 4, border: "1px solid #FFCDD2" }}>
+                                <div style={{ fontSize: 11, color: "var(--danger)", fontWeight: 600, marginBottom: 4 }}>
                                   AI Rejected: {latestFailure.note}
                                 </div>
                                 <div style={{ display: "flex", gap: 4 }}>
@@ -359,7 +368,7 @@ export function AdminDashboard() {
             </tbody>
           </table>
         )}
-      </div>
-    </div>
+      </Card>
+    </PageContainer>
   );
 }

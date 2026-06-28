@@ -1,0 +1,84 @@
+/* ── Button ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-family: var(--sans);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  border: 2px solid transparent;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* ── Sizes ── */
+.btn--sm {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.btn--md {
+  font-size: 14px;
+  padding: 10px 20px;
+}
+
+.btn--lg {
+  font-size: 16px;
+  padding: 13px 28px;
+}
+
+/* ── Primary ── */
+.btn--primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn--primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ── Secondary (outlined) ── */
+.btn--secondary {
+  background: var(--surface);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: var(--primary-light);
+}
+
+.btn--secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ── Danger ── */
+.btn--danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+}
+
+.btn--danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ── Disabled ── */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

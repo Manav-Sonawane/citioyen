@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { NavBar } from "./components/NavBar";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { MapView } from "./pages/MapView";
@@ -12,11 +13,13 @@ import { FieldAgentDashboard } from "./pages/FieldAgentDashboard";
 import { PublicDashboard } from "./pages/PublicDashboard";
 import { Leaderboard } from "./pages/Leaderboard";
 import { Hotspots } from "./pages/Hotspots";
+import { Profile } from "./pages/Profile";
 import "./App.css";
 
 function App() {
   return (
     <div className="app-container">
+      <NavBar />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -31,9 +34,11 @@ function App() {
         <Route path="/issues/:id" element={<ProtectedRoute><IssueDetail /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/field-agent" element={<ProtectedRoute><FieldAgentDashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
     </div>
   );
 }
 
 export default App;
+

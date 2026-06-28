@@ -8,7 +8,7 @@ import {
   useAdvancedMarkerRef,
 } from "@vis.gl/react-google-maps";
 import { fetchApi } from "../lib/api";
-import { useAuth } from "../lib/auth";
+import { Badge, Button } from "../components/ui";
 
 // ---------- Types ----------
 
@@ -44,10 +44,6 @@ const STATUS_COLOR: Record<string, string> = {
 
 function markerColor(status: string) {
   return STATUS_COLOR[status] ?? "#3182ce";
-}
-
-function statusLabel(status: string) {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ---------- Single marker with InfoWindow ----------
@@ -92,24 +88,11 @@ function IssueMarker({ issue, isSelected, onSelect, onClose }: IssueMarkerProps)
 
       {isSelected && markerEl && (
         <InfoWindow anchor={markerEl} onClose={onClose} shouldFocus={false}>
-          <div style={{ maxWidth: 240, fontFamily: "sans-serif", fontSize: 13 }}>
+          <div style={{ maxWidth: 240, fontFamily: "var(--sans)", fontSize: 13 }}>
             {/* Status badge */}
-            <span
-              style={{
-                display: "inline-block",
-                padding: "2px 8px",
-                borderRadius: 12,
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#fff",
-                backgroundColor: markerColor(issue.status),
-                marginBottom: 6,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              {statusLabel(issue.status)}
-            </span>
+            <div style={{ marginBottom: 6 }}>
+              <Badge status={issue.status} />
+            </div>
 
             {issue.title && (
               <p style={{ fontWeight: 700, margin: "0 0 4px", fontSize: 14 }}>
@@ -138,7 +121,7 @@ function IssueMarker({ issue, isSelected, onSelect, onClose }: IssueMarkerProps)
               to={`/issues/${issue.id}`}
               style={{
                 display: "inline-block",
-                color: "#3182ce",
+                color: "var(--primary)",
                 fontWeight: 600,
                 textDecoration: "none",
               }}
@@ -158,7 +141,6 @@ const MUMBAI_CENTER = { lat: 19.076, lng: 72.8777 };
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
 export function MapView() {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -194,7 +176,7 @@ export function MapView() {
   }, []);
 
   return (
-    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+    <div style={{ position: "relative", width: "100vw", height: "calc(100vh - var(--navbar-height))" }}>
       <APIProvider apiKey={API_KEY}>
         <Map
           defaultCenter={center}
@@ -216,7 +198,7 @@ export function MapView() {
         </Map>
       </APIProvider>
 
-      {/* Top bar */}
+      {/* Status overlay */}
       <div
         style={{
           position: "absolute",
@@ -225,55 +207,22 @@ export function MapView() {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          background: "#fff",
-          padding: "8px 16px",
-          borderRadius: 10,
-          boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
-          fontFamily: "var(--sans, sans-serif)",
+          background: "var(--surface)",
+          padding: "var(--space-sm) var(--space-md)",
+          borderRadius: "var(--radius-md)",
+          boxShadow: "var(--shadow-md)",
+          fontFamily: "var(--sans)",
           fontSize: 13,
-          color: "var(--text, #2D3748)",
+          color: "var(--text)",
           zIndex: 10,
-          borderLeft: "4px solid #1565C0",
+          borderLeft: "4px solid var(--primary)",
         }}
       >
-        <span style={{ fontWeight: 800, color: "var(--primary)", fontSize: 18, letterSpacing: "-0.5px" }}>Citioyen</span>
-        <span style={{ color: "var(--border)" }}>|</span>
-        
-        {/* Toggle Nav */}
-        <div style={{ display: "flex", gap: 16 }}>
-          <Link to="/" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Feed</Link>
-          <span style={{ fontWeight: 700, color: "var(--primary)", borderBottom: "2px solid var(--primary)" }}>Map</span>
-          {user && ["admin", "super_admin"].includes(user.role) && (
-            <Link to="/admin" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>Admin</Link>
-          )}
-          {user && user.role === "field_agent" && (
-            <Link to="/field-agent" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600 }}>My Tasks</Link>
-          )}
-        </div>
-
-        <span style={{ color: "var(--border)" }}>|</span>
-        <span>👋 <strong>{user?.name}</strong></span>
-        <span style={{ color: "#D0D7E3" }}>|</span>
-        {loading && <span style={{ color: "#5A6478" }}>Loading issues…</span>}
+        {loading && <span style={{ color: "var(--text-muted)" }}>Loading issues…</span>}
         {!loading && !error && (
-          <span style={{ color: "#5A6478" }}>{issues.length} issue{issues.length !== 1 ? "s" : ""}</span>
+          <span style={{ color: "var(--text-muted)" }}>{issues.length} issue{issues.length !== 1 ? "s" : ""}</span>
         )}
-        {error && <span style={{ color: "#C62828" }}>Error: {error}</span>}
-        <span style={{ color: "#D0D7E3" }}>|</span>
-        <button
-          onClick={logout}
-          style={{
-            border: "none",
-            background: "none",
-            color: "#C62828",
-            cursor: "pointer",
-            fontWeight: 600,
-            padding: 0,
-            fontSize: 13,
-          }}
-        >
-          Logout
-        </button>
+        {error && <span style={{ color: "var(--danger)" }}>Error: {error}</span>}
       </div>
 
       {/* Floating Action Buttons */}
@@ -286,44 +235,28 @@ export function MapView() {
         gap: "12px",
         zIndex: 10
       }}>
-        <button
+        <Button
+          variant="primary"
+          size="lg"
           onClick={() => navigate("/report")}
           style={{
-            padding: "13px 24px",
-            backgroundColor: "#1565C0",
-            color: "#fff",
-            border: "none",
-            borderRadius: 999,
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: "pointer",
+            borderRadius: "var(--radius-full)",
             boxShadow: "0 4px 16px rgba(21,101,192,0.45)",
-            fontFamily: "var(--sans, sans-serif)",
-            whiteSpace: "nowrap",
-            letterSpacing: "0.01em",
           }}
         >
           + Report an Issue
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          size="lg"
           onClick={() => navigate("/chat-report")}
           style={{
-            padding: "13px 24px",
-            backgroundColor: "#fff",
-            color: "#1565C0",
-            border: "2px solid #1565C0",
-            borderRadius: 999,
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: "pointer",
+            borderRadius: "var(--radius-full)",
             boxShadow: "0 4px 16px rgba(21,101,192,0.2)",
-            fontFamily: "var(--sans, sans-serif)",
-            whiteSpace: "nowrap",
-            letterSpacing: "0.01em",
           }}
         >
           💬 Report via Chat
-        </button>
+        </Button>
       </div>
     </div>
   );

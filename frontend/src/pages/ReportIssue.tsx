@@ -6,6 +6,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import { fetchApi } from "../lib/api";
 import { MapLocationPicker, useReverseGeocode } from "../components/MapLocationPicker";
+import { PageContainer, Card, Button } from "../components/ui";
 
 const MAX_FILES = 5;
 const ACCEPTED_TYPES = "image/jpeg,image/png,image/webp,video/mp4,video/quicktime";
@@ -203,45 +204,26 @@ function ReportIssueInner() {
   // ---------- Styles ----------
 
   const s: Record<string, React.CSSProperties> = {
-    container: {
-      maxWidth: "600px",
-      margin: "40px auto",
-      padding: "28px 28px 36px",
-      background: "#FFFFFF",
-      border: "1px solid #D0D7E3",
-      borderRadius: "10px",
-      fontFamily: "var(--sans, sans-serif)",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-    },
     group: { marginBottom: "18px" },
-    label: { display: "block", marginBottom: "5px", fontWeight: 600, fontSize: "13px", color: "#5A6478", textTransform: "uppercase" as const, letterSpacing: "0.04em" },
-    input: { width: "100%", padding: "9px 11px", boxSizing: "border-box" as const, fontSize: "14px", border: "1px solid #D0D7E3", borderRadius: "5px", color: "#2D3748", background: "#fff" },
-    textarea: { width: "100%", padding: "9px 11px", boxSizing: "border-box" as const, fontSize: "14px", resize: "vertical" as const, minHeight: "110px", border: "1px solid #D0D7E3", borderRadius: "5px", color: "#2D3748", background: "#fff" },
-    hint: { fontSize: "12px", color: "#5A6478", marginTop: "5px" },
-    charCount: { fontSize: "12px", color: description.length > 2000 ? "#C62828" : "#5A6478", textAlign: "right" as const, marginTop: "3px" },
-    error: { color: "#C62828", backgroundColor: "#FFEBEE", border: "1px solid #FFCDD2", padding: "10px 14px", marginBottom: "16px", borderRadius: "6px", fontSize: "14px" },
-    submitBtn: {
-      width: "100%", padding: "11px", fontSize: "15px", fontWeight: 700,
-      backgroundColor: submitting ? "#9EB5D8" : "#1565C0",
-      color: "white", border: "none", borderRadius: "6px",
-      cursor: submitting ? "not-allowed" : "pointer",
-      letterSpacing: "0.01em",
-    },
+    label: { display: "block", marginBottom: "5px", fontWeight: 600, fontSize: "13px", color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.04em" },
+    input: { width: "100%", padding: "9px 11px", boxSizing: "border-box" as const, fontSize: "14px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--text)", background: "var(--surface)" },
+    textarea: { width: "100%", padding: "9px 11px", boxSizing: "border-box" as const, fontSize: "14px", resize: "vertical" as const, minHeight: "110px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--text)", background: "var(--surface)" },
+    hint: { fontSize: "12px", color: "var(--text-muted)", marginTop: "5px" },
+    charCount: { fontSize: "12px", color: description.length > 2000 ? "var(--danger)" : "var(--text-muted)", textAlign: "right" as const, marginTop: "3px" },
     geoBtn: {
-      padding: "7px 14px", fontSize: "13px", border: "1px solid #D0D7E3",
-      borderRadius: "5px", cursor: geoLoading ? "not-allowed" : "pointer",
-      backgroundColor: "#F5F7FA", color: "#1565C0", fontWeight: 600,
+      padding: "7px 14px", fontSize: "13px", border: "1px solid var(--border)",
+      borderRadius: "var(--radius-sm)", cursor: geoLoading ? "not-allowed" : "pointer",
+      backgroundColor: "var(--bg)", color: "var(--primary)", fontWeight: 600,
     },
     toggleBtn: {
       background: "none", border: "none", cursor: "pointer",
-      color: "#1565C0", fontSize: "13px", padding: 0, textDecoration: "underline",
+      color: "var(--primary)", fontSize: "13px", padding: 0, textDecoration: "underline",
     },
     coordsDisplay: {
-      fontSize: "12px", color: "#2E7D32", marginTop: "8px",
-      padding: "6px 10px", backgroundColor: "#E8F5E9", borderRadius: "5px",
+      fontSize: "12px", color: "var(--success)", marginTop: "8px",
+      padding: "6px 10px", backgroundColor: "var(--success-light)", borderRadius: "var(--radius-sm)",
       border: "1px solid #C8E6C9",
     },
-    back: { display: "block", textAlign: "center" as const, marginTop: "16px", fontSize: "13px", color: "#1565C0" },
   };
 
   const mapCenter = coords ?? MUMBAI;
@@ -249,181 +231,193 @@ function ReportIssueInner() {
   if (successData) {
     const duplicates = successData.possibleDuplicates || [];
     return (
-      <div style={s.container}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-          <h2 style={{ color: "var(--text-heading)", margin: 0 }}>Your report was submitted successfully</h2>
-          <p style={{ color: "var(--text-muted)", marginTop: 8 }}>Thank you for keeping the community safe!</p>
-        </div>
-
-        {duplicates.length > 0 && (
-          <div style={{ marginTop: 32, background: "var(--bg)", padding: 16, borderRadius: 8, border: "1px solid var(--border)" }}>
-            <h3 style={{ fontSize: 16, marginTop: 0, marginBottom: 12, color: "var(--text-heading)" }}>We found {duplicates.length} similar report(s) nearby:</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {duplicates.map((dup: any) => (
-                <Link 
-                  key={dup.id} 
-                  to={`/issues/${dup.id}`}
-                  style={{ display: "block", padding: 12, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, textDecoration: "none", color: "inherit" }}
-                >
-                  <p style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                    {dup.description}
-                  </p>
-                </Link>
-              ))}
-            </div>
+      <PageContainer narrow>
+        <Card>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+            <h2 style={{ color: "var(--text-heading)", margin: 0 }}>Your report was submitted successfully</h2>
+            <p style={{ color: "var(--text-muted)", marginTop: 8 }}>Thank you for keeping the community safe!</p>
           </div>
-        )}
 
-        <button 
-          onClick={() => navigate("/")} 
-          style={{ ...s.submitBtn, marginTop: 32, backgroundColor: "var(--primary)" }}
-        >
-          Continue
-        </button>
-      </div>
+          {duplicates.length > 0 && (
+            <Card style={{ marginTop: 32, background: "var(--bg)" }}>
+              <h3 style={{ fontSize: 16, marginTop: 0, marginBottom: 12, color: "var(--text-heading)" }}>We found {duplicates.length} similar report(s) nearby:</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {duplicates.map((dup: any) => (
+                  <Link 
+                    key={dup.id} 
+                    to={`/issues/${dup.id}`}
+                    style={{ display: "block", padding: 12, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", textDecoration: "none", color: "inherit" }}
+                  >
+                    <p style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {dup.description}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => navigate("/")}
+            style={{ width: "100%", marginTop: 32 }}
+          >
+            Continue
+          </Button>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <div style={s.container}>
-      <h1 style={{ marginTop: 0, fontSize: "22px" }}>Report an Issue</h1>
+    <PageContainer narrow>
+      <Card>
+        <h1 style={{ marginTop: 0, fontSize: "22px" }}>Report an Issue</h1>
 
-      {error && <div style={s.error}>{error}</div>}
+        {error && <div className="alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
-      <form onSubmit={handleSubmit}>
-        {/* Title */}
-        <div style={s.group}>
-          <label style={s.label}>
-            Title <span style={{ fontWeight: "normal", color: "#777" }}>(optional)</span>
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Pothole on Main Street"
-            style={s.input}
-          />
-        </div>
-
-        {/* Description */}
-        <div style={s.group}>
-          <label style={s.label}>Description *</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the issue in detail (10–2000 characters)…"
-            required
-            style={s.textarea}
-          />
-          <div style={s.charCount}>{description.length} / 2000</div>
-        </div>
-
-        {/* Location */}
-        <div style={s.group}>
-          <label style={s.label}>Location *</label>
-
-          {/* Places Autocomplete search */}
-          <PlacesAutocompleteInput
-            value={addressText}
-            onChange={setAddressText}
-            onPlaceSelected={(lat, lng, addr) => applyLocation(lat, lng, addr)}
-            inputStyle={s.input}
-          />
-          <p style={s.hint}>Search for an address, or use the options below.</p>
-
-          {/* "Use my location" + "Pick on map" buttons */}
-          <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={handleUseMyLocation}
-              disabled={geoLoading}
-              style={s.geoBtn}
-            >
-              {geoLoading ? "Detecting…" : "📍 Use my current location"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMapOpen((o) => !o)}
-              style={s.toggleBtn}
-            >
-              {mapOpen ? "▲ Hide map" : "▼ Pick on map"}
-            </button>
+        <form onSubmit={handleSubmit}>
+          {/* Title */}
+          <div style={s.group}>
+            <label style={s.label}>
+              Title <span style={{ fontWeight: "normal", color: "var(--text-muted)" }}>(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Pothole on Main Street"
+              style={s.input}
+            />
           </div>
 
-          {/* Collapsible map picker */}
-          {mapOpen && (
-            <div style={{ marginTop: 10 }}>
-              <p style={{ ...s.hint, marginBottom: 6 }}>
-                Click the map to pin a location. The address field will update automatically.
-              </p>
-              <MapLocationPicker
-                center={mapCenter}
-                markerPos={coords}
-                onLocationSelect={handleMapLocationSelect}
-              />
+          {/* Description */}
+          <div style={s.group}>
+            <label style={s.label}>Description *</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the issue in detail (10–2000 characters)…"
+              required
+              style={s.textarea}
+            />
+            <div style={s.charCount}>{description.length} / 2000</div>
+          </div>
+
+          {/* Location */}
+          <div style={s.group}>
+            <label style={s.label}>Location *</label>
+
+            {/* Places Autocomplete search */}
+            <PlacesAutocompleteInput
+              value={addressText}
+              onChange={setAddressText}
+              onPlaceSelected={(lat, lng, addr) => applyLocation(lat, lng, addr)}
+              inputStyle={s.input}
+            />
+            <p style={s.hint}>Search for an address, or use the options below.</p>
+
+            {/* "Use my location" + "Pick on map" buttons */}
+            <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={geoLoading}
+                style={s.geoBtn}
+              >
+                {geoLoading ? "Detecting…" : "📍 Use my current location"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMapOpen((o) => !o)}
+                style={s.toggleBtn}
+              >
+                {mapOpen ? "▲ Hide map" : "▼ Pick on map"}
+              </button>
             </div>
-          )}
 
-          {/* Show resolved coords */}
-          {coords && (
-            <div style={s.coordsDisplay}>
-              📌 {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
-              {addressText && <> — {addressText}</>}
-            </div>
-          )}
-        </div>
+            {/* Collapsible map picker */}
+            {mapOpen && (
+              <div style={{ marginTop: 10 }}>
+                <p style={{ ...s.hint, marginBottom: 6 }}>
+                  Click the map to pin a location. The address field will update automatically.
+                </p>
+                <MapLocationPicker
+                  center={mapCenter}
+                  markerPos={coords}
+                  onLocationSelect={handleMapLocationSelect}
+                />
+              </div>
+            )}
 
-        {/* Landmark */}
-        <div style={s.group}>
-          <label style={s.label}>
-            Landmark <span style={{ fontWeight: "normal", color: "#777" }}>(optional)</span>
-          </label>
-          <input
-            type="text"
-            value={landmark}
-            onChange={(e) => setLandmark(e.target.value)}
-            placeholder="e.g. Near City Station"
-            style={s.input}
-          />
-        </div>
+            {/* Show resolved coords */}
+            {coords && (
+              <div style={s.coordsDisplay}>
+                📌 {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                {addressText && <> — {addressText}</>}
+              </div>
+            )}
+          </div>
 
-        {/* Media Upload */}
-        <div style={s.group}>
-          <label style={s.label}>
-            Photos / Videos{" "}
-            <span style={{ fontWeight: "normal", color: "#777" }}>(optional, max {MAX_FILES})</span>
-          </label>
-          <input
-            type="file"
-            accept={ACCEPTED_TYPES}
-            multiple
-            ref={fileInputRef}
-            onChange={handleFileChange}
+          {/* Landmark */}
+          <div style={s.group}>
+            <label style={s.label}>
+              Landmark <span style={{ fontWeight: "normal", color: "var(--text-muted)" }}>(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              placeholder="e.g. Near City Station"
+              style={s.input}
+            />
+          </div>
+
+          {/* Media Upload */}
+          <div style={s.group}>
+            <label style={s.label}>
+              Photos / Videos{" "}
+              <span style={{ fontWeight: "normal", color: "var(--text-muted)" }}>(optional, max {MAX_FILES})</span>
+            </label>
+            <input
+              type="file"
+              accept={ACCEPTED_TYPES}
+              multiple
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{ width: "100%" }}
+            />
+            {files.length > 0 && (
+              <ul style={{ margin: "8px 0 0", paddingLeft: "18px", fontSize: "13px", color: "var(--text)" }}>
+                {files.map((f) => (
+                  <li key={f.name}>
+                    {f.name} ({(f.size / 1024 / 1024).toFixed(1)} MB)
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p style={s.hint}>Accepted: JPEG, PNG, WebP, MP4, MOV — max 25 MB each</p>
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={submitting}
             style={{ width: "100%" }}
-          />
-          {files.length > 0 && (
-            <ul style={{ margin: "8px 0 0", paddingLeft: "18px", fontSize: "13px", color: "#333" }}>
-              {files.map((f) => (
-                <li key={f.name}>
-                  {f.name} ({(f.size / 1024 / 1024).toFixed(1)} MB)
-                </li>
-              ))}
-            </ul>
-          )}
-          <p style={s.hint}>Accepted: JPEG, PNG, WebP, MP4, MOV — max 25 MB each</p>
-        </div>
+          >
+            {submitting ? "Submitting…" : "Submit Report"}
+          </Button>
+        </form>
 
-        <button type="submit" disabled={submitting} style={s.submitBtn}>
-          {submitting ? "Submitting…" : "Submit Report"}
-        </button>
-      </form>
-
-      <Link to="/" style={s.back}>
-        ← Back to map
-      </Link>
-    </div>
+        <Link to="/" style={{ display: "block", textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--primary)" }}>
+          ← Back to Feed
+        </Link>
+      </Card>
+    </PageContainer>
   );
 }
 

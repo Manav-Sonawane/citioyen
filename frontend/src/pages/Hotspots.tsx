@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchApi } from "../lib/api";
-import { Link } from "react-router-dom";
+import { PageContainer, Card, LoadingSpinner, EmptyState } from "../components/ui";
 
 interface Hotspot {
   wardName: string;
@@ -25,21 +25,18 @@ export function Hotspots() {
   const getTrendIndicator = (trend: string) => {
     switch (trend) {
       case "rising":
-        return <span style={{ color: "#E53E3E", fontWeight: "bold" }}>↑ Rising</span>;
+        return <span style={{ color: "var(--danger)", fontWeight: "bold" }}>↑ Rising</span>;
       case "falling":
-        return <span style={{ color: "#38A169", fontWeight: "bold" }}>↓ Falling</span>;
+        return <span style={{ color: "var(--success)", fontWeight: "bold" }}>↓ Falling</span>;
       default:
-        return <span style={{ color: "#718096", fontWeight: "bold" }}>→ Stable</span>;
+        return <span style={{ color: "var(--text-muted)", fontWeight: "bold" }}>→ Stable</span>;
     }
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: "0 20px", fontFamily: "var(--sans, sans-serif)", color: "var(--text-heading)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+    <PageContainer>
+      <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, margin: 0 }}>🔥 Issue Hotspots</h1>
-        <Link to="/login" style={{ fontSize: 14, color: "var(--primary)", textDecoration: "none", fontWeight: 600 }}>
-          ← Back to Login
-        </Link>
       </div>
 
       <p style={{ color: "var(--text-muted)", marginBottom: 32 }}>
@@ -47,27 +44,21 @@ export function Hotspots() {
       </p>
 
       {loading ? (
-        <p style={{ color: "var(--text-muted)" }}>Loading hotspots...</p>
+        <LoadingSpinner message="Loading hotspots…" />
       ) : error ? (
-        <div style={{ color: "#C62828", background: "#FFEBEE", padding: 12, borderRadius: 6, border: "1px solid #FFCDD2" }}>
-          {error}
-        </div>
+        <div className="alert-error">{error}</div>
       ) : hotspots.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>No hotspots found.</p>
+        <EmptyState
+          icon="📍"
+          title="No hotspots found"
+          message="Check back later as more issues are reported across the city."
+        />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {hotspots.map((h, i) => (
-            <div
+            <Card
               key={`${h.wardName}-${h.categoryName}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                padding: 16,
-                borderRadius: 8,
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              }}
+              style={{ display: "flex", alignItems: "center", padding: "var(--space-md) var(--space-lg)" }}
             >
               <div style={{ fontSize: 20, fontWeight: "bold", width: 40, color: "var(--text-muted)" }}>
                 #{i + 1}
@@ -89,19 +80,10 @@ export function Hotspots() {
               <div style={{ width: 80, textAlign: "right", paddingLeft: 16 }}>
                 {getTrendIndicator(h.trend)}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
-
-      <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--border)", display: "flex", gap: 16 }}>
-        <Link to="/dashboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
-          📊 City Dashboard
-        </Link>
-        <Link to="/leaderboard" style={{ color: "var(--text-muted)", textDecoration: "none", fontWeight: 600, fontSize: 14 }}>
-          🏆 Leaderboard
-        </Link>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,0 +1,13 @@
+/* ── PageContainer ── */
+.page-container {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-2xl);
+  /* Offset for sticky navbar */
+  padding-top: calc(var(--navbar-height) + var(--space-lg));
+}
+
+.page-container--narrow {
+  max-width: var(--page-narrow-width);
+}

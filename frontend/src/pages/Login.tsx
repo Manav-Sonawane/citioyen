@@ -3,6 +3,7 @@ import { useAuth } from "../lib/auth";
 import { fetchApi } from "../lib/api";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import { Button } from "../components/ui";
 
 export function Login() {
   const { login } = useAuth();
@@ -104,14 +105,15 @@ export function Login() {
               required
             />
           </div>
-          <button
+          <Button
             type="submit"
-            className="btn-primary"
+            variant="primary"
+            size="lg"
             disabled={loading}
-            style={{ width: "100%", padding: "11px", fontSize: 15, marginTop: 4 }}
+            style={{ width: "100%", marginTop: 4 }}
           >
             {loading ? "Signing in…" : "Sign In"}
-          </button>
+          </Button>
         </form>
 
         <div style={{ display: "flex", alignItems: "center", margin: "20px 0" }}>
