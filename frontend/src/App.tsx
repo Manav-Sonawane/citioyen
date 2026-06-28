@@ -1,8 +1,10 @@
 import { Routes, Route } from "react-router-dom";
+import { useAuth } from "./lib/auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { NavBar } from "./components/NavBar";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
+import { Landing } from "./pages/Landing";
 import { MapView } from "./pages/MapView";
 import { HomeFeed } from "./pages/HomeFeed";
 import { IssueDetail } from "./pages/IssueDetail";
@@ -14,7 +16,19 @@ import { PublicDashboard } from "./pages/PublicDashboard";
 import { Leaderboard } from "./pages/Leaderboard";
 import { Hotspots } from "./pages/Hotspots";
 import { Profile } from "./pages/Profile";
+import { LoadingSpinner } from "./components/ui";
 import "./App.css";
+
+/**
+ * Shows Landing for logged-out visitors, HomeFeed for logged-in users.
+ */
+function HomeOrLanding() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div style={{ padding: "var(--space-2xl)" }}><LoadingSpinner message="Loading…" /></div>;
+  if (!user) return <Landing />;
+  return <HomeFeed />;
+}
 
 function App() {
   return (
@@ -27,7 +41,7 @@ function App() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/hotspots" element={<Hotspots />} />
         
-        <Route path="/" element={<ProtectedRoute><HomeFeed /></ProtectedRoute>} />
+        <Route path="/" element={<HomeOrLanding />} />
         <Route path="/map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
         <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
         <Route path="/chat-report" element={<ProtectedRoute><ChatReport /></ProtectedRoute>} />
@@ -41,4 +55,3 @@ function App() {
 }
 
 export default App;
-
