@@ -11,6 +11,16 @@ Community Hero lets citizens report local infrastructure problems — potholes, 
 
 ---
 
+<img width="955" height="946" alt="image" src="https://github.com/user-attachments/assets/43dbc3f0-86dc-4c2d-abea-2646bf0269b1" />
+<img width="631" height="798" alt="image" src="https://github.com/user-attachments/assets/2a633cad-47d2-4afc-8ca9-f00c8ae1d01d" />
+<img width="632" height="795" alt="image" src="https://github.com/user-attachments/assets/bdb9b9c8-9836-4335-92ba-b3142979d6b7" />
+
+<img width="1919" height="948" alt="image" src="https://github.com/user-attachments/assets/8af13a28-7fa5-4112-9a23-ca1f62ddca79" />
+<img width="1919" height="945" alt="image" src="https://github.com/user-attachments/assets/9631e625-fbbb-49b7-932b-71a3ad871796" />
+<img width="1919" height="949" alt="image" src="https://github.com/user-attachments/assets/d1efe9bb-37c2-4b6e-b9cd-411c0d7e71ca" />
+
+<img width="1919" height="942" alt="image" src="https://github.com/user-attachments/assets/cae138cb-bdd1-4298-aa08-2830a6d2f902" />
+
 ## Features
 
 ### Citizen Reporting
